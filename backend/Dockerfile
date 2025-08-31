@@ -10,9 +10,6 @@ RUN apt-get install -y libasound-dev portaudio19-dev libportaudio2 libportaudioc
 
 RUN pip install -r requirements.txt
 
-RUN python3 -c "\
-import nltk; \
-import nltk.downloader all; \
-"
+RUN python3 -c "import nltk; nltk.download('all')"
 
 CMD ["fastapi", "run", "app.py"]
