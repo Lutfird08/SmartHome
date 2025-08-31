@@ -1,5 +1,5 @@
 # Gunakan base image Python yang lebih kecil
-FROM python:3.11-slim-buster
+FROM python:3.11-slim-bullseye
 
 # !! BARIS BARU DITAMBAHKAN DI SINI !!
 # Install build tools dan library yang dibutuhkan oleh PyAudio
