@@ -1,5 +1,9 @@
-# Gunakan base image Python yang lebih kecil (slim version)
+# Gunakan base image Python yang lebih kecil
 FROM python:3.11-slim-buster
+
+# !! BARIS BARU DITAMBAHKAN DI SINI !!
+# Install build tools dan library yang dibutuhkan oleh PyAudio
+RUN apt-get update && apt-get install -y gcc portaudio19-dev
 
 # Tetapkan direktori kerja di dalam container
 WORKDIR /app
