@@ -1,5 +1,5 @@
 # Gunakan base image Python yang lebih kecil (slim version)
-FROM python:3.9-slim-buster
+FROM python:3.11-slim-buster
 
 # Tetapkan direktori kerja di dalam container
 WORKDIR /app
