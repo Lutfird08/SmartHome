@@ -50,3 +50,4 @@ wrapt==1.17.2
 fastapi
 uvicorn
 fastapi[standard]
+gunicorn
