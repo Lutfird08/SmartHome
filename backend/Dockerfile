@@ -1,15 +1,23 @@
-FROM python:3.11-slim-bookworm
+# Gunakan base image Python yang lebih kecil (slim version)
+FROM python:3.9-slim-buster
 
-COPY . /local
+# Tetapkan direktori kerja di dalam container
+WORKDIR /app
 
-WORKDIR /local
+# Salin file requirements terlebih dahulu untuk caching
+COPY requirements.txt requirements.txt
 
-RUN apt-get update -y
+# Install dependensi Python
+RUN pip install --no-cache-dir -r requirements.txt
 
-RUN apt-get install -y libasound-dev portaudio19-dev libportaudio2 libportaudiocpp0 ffmpeg gcc python3.11-venv
+# Unduh HANYA paket NLTK yang dibutuhkan, bukan semuanya
+RUN python3 -c "import nltk; nltk.download('punkt'); nltk.download('wordnet'); nltk.download('omw-1.4')"
 
-RUN pip install -r requirements.txt
+# Salin sisa kode aplikasi ke dalam container
+COPY . .
 
-RUN python3 -c "import nltk; nltk.download('all')"
+# Beritahu Docker port mana yang akan diekspos
+EXPOSE 8080
 
-CMD ["fastapi", "run", "app.py"]
+# Perintah untuk menjalankan aplikasi saat container dimulai
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "app:app"]
