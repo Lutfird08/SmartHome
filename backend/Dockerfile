@@ -24,4 +24,4 @@ COPY . .
 EXPOSE 8080
 
 # Perintah untuk menjalankan aplikasi saat container dimulai
-CMD ["python", "-m", "gunicorn", "--bind", "0.0.0.0:8080", "app:app"]
+CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8080", "app:app"]
