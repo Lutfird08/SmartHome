@@ -21,8 +21,8 @@ function validatePassword() {
     let passwordInput = document.getElementById("password");
     let password = passwordInput.value;
 
-    // Gunakan alamat backend yang benar
-    const url = `${BACKEND_URL}/api/password`;
+    // Alamat backend yang benar (tanpa /api)
+    const url = `${BACKEND_URL}/password`;
 
     fetch(url, {
         method: "POST",
