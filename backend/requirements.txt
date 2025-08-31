@@ -51,3 +51,4 @@ fastapi
 uvicorn
 fastapi[standard]
 gunicorn
+Flask-Cors
