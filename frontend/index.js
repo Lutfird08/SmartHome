@@ -1,3 +1,8 @@
+// GANTI SEMUA ISI FILE index.js DENGAN KODE INI
+
+// Definisikan alamat backend Anda
+const BACKEND_URL = 'https://smarthome-backend-production-1d56.up.railway.app';
+
 function togglePassword() {
     let passwordInput = document.getElementById("password");
     let toggleButton = document.querySelector(".toggle-password");
@@ -16,7 +21,8 @@ function validatePassword() {
     let passwordInput = document.getElementById("password");
     let password = passwordInput.value;
 
-    const url = `/api/password`;
+    // Gunakan alamat backend yang benar
+    const url = `${BACKEND_URL}/api/password`;
 
     fetch(url, {
         method: "POST",
@@ -28,17 +34,16 @@ function validatePassword() {
         })
     })
     .then(response => {
-        if (response.status === 200) {
+        if (response.ok) { // Gunakan response.ok untuk memeriksa status 200-299
             window.location.href = "home.html";
-            return
+        } else {
+            alert('Password salah atau terjadi kesalahan!');
         }
-
-        alert('wrong password')
     })
     .catch(error => {
-        console.log(error)
-    })
-
+        console.error("Error:", error);
+        alert('Tidak dapat terhubung ke server. Periksa koneksi Anda.');
+    });
 }
 
 document.getElementById("password").addEventListener("keyup", function(event) {
@@ -46,9 +51,3 @@ document.getElementById("password").addEventListener("keyup", function(event) {
         validatePassword();
     }
 });
-
-// let loginCard = document.querySelector(".login-card");
-// let submitButton = document.createElement("button");
-// submitButton.textContent = "Login";
-// submitButton.onclick = validatePassword;
-// loginCard.appendChild(submitButton);
