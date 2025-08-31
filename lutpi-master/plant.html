@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <title>Smart Home Plant Control</title>
+    <style>
+        body {
+            font-family: Poppins, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .header {
+            background-color: white;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        .logo img {
+            width: 40px;
+            margin-right: 10px;
+        }
+        .container {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        .plant-card {
+            background-color: #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .plant-icon {
+        width: 80px;
+        height: 80px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 10px;
+        }
+        .plant-icon img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #000000;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #4CAF50;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        .back-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #ffc107;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .back-button:hover {
+            background-color: #e8b007;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            transform: translateY(-2px);
+        }
+
+        .back-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <img src="https://www.unpad.ac.id/wp-content/uploads/2018/04/logo-unpad1.png" alt="Logo">
+            <span>Smart Home</span>
+        </div>
+    </div>
+    <div class="container">
+        <div class="plant-card">
+            <div class="plant-icon"><img src="/Asset/plant.png" alt="tanaman"></div>
+            <p>Penyiram Tanaman</p>
+            <label class="switch">
+                <input type="checkbox" id="plant">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="plant-card">
+            <div class="plant-icon"><img src="/Asset/automation.png" alt="tanaman"></div>
+            <p>Sistem Otomatis</p>
+            <label class="switch">
+                <input type="checkbox" id="otomatis">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+    <a href="home.html" class="back-button">
+        &#8592;
+    </a>
+
+    <script>
+        async function fetchPlant() {
+            try {
+                const response = await fetch('/api/plant')
+                const data = await response.json()
+
+                if (data) {
+                    document.querySelector('#plant').checked = data.condition
+                }
+
+                const response_sistem = await fetch('/api/sistem_tanaman')
+                const data_sistem = await response_sistem.json()
+                if (data_sistem) {
+                    document.querySelector('#otomatis').checked = data_sistem.condition
+                }
+            } catch (e) {
+                console.error(e)
+            }
+        }
+
+        function updatePlantCondition() {
+            const url = `/api/plant`;
+
+            // Make the PUT request
+            fetch(url, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.message);  // Log success message
+            })
+            .catch(error => {
+                console.error("Error:", error);
+            });
+        }
+
+        document.querySelector("#plant").addEventListener("change", function() {
+            updatePlantCondition("one",  this.checked);
+        })
+
+
+        function updateOtomatisCondition() {
+            const url = `/api/sistem_tanaman`;
+
+            // Make the PUT request
+            fetch(url, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.message);  // Log success message
+            })
+            .catch(error => {
+                console.error("Error:", error);
+            });
+        }
+
+        document.querySelector("#otomatis").addEventListener("change", function() {
+            updateOtomatisCondition(this.checked);
+        });
+
+        window.onload = fetchPlant
+    </script>
+</body>
+</html>

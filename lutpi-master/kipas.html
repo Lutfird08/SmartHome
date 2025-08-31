@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <title>Smart Home Fan Control</title>
+    <style>
+        body {
+            font-family: Poppins, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .header {
+            background-color: white;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        .logo img {
+            width: 40px;
+            margin-right: 10px;
+        }
+        .container {
+            padding: 80px 20px 20px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        .fan-card {
+            background-color: #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .fan-icon {
+        width: 80px;
+        height: 80px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 10px;
+        }
+        .fan-icon img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        }
+        .fan-label {
+            margin-bottom: 10px;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #000000;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #4CAF50;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        .speed-control {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #ccc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        .speed-control::after {
+            content: "";
+            width: 20px;
+            height: 20px;
+            background-color: #ffffff;
+            border-radius: 50%;
+        }
+        .back-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #ffc107;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .back-button:hover {
+            background-color: #e8b007;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            transform: translateY(-2px);
+        }
+
+        .back-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <img src="https://www.unpad.ac.id/wp-content/uploads/2018/04/logo-unpad1.png" alt="Logo">
+            <span>Smart Home</span>
+        </div>
+    </div>
+    <div class="container">
+        <div class="fan-card">
+            <div class="fan-icon"><img src="/Asset/fan.png" alt="kipas"></div>
+            <div class="fan-label">Kipas Angin</div>
+            <label class="switch">
+                <input type="checkbox" id="fan">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="fan-card">
+            <div class="fan-icon"><img src="/Asset/fan-speed.png" alt="kipas"></div>
+            <div class="fan-label">Kecepatan</div>
+            <button class="speed-control" id="fan_speed"></button>
+        </div>
+    </div>
+    <a href="home.html" class="back-button">
+        &#8592;
+    </a>
+
+    <script>
+        var currSpeed = 0
+
+        function colorConverter(speed) {
+            if (speed == 1) {
+                return '#006600'
+            }
+
+            if (speed == 2) {
+                return '#00cc00'
+            }
+
+            if (speed == 3) {
+                return '#00ff00'
+            }
+        }
+
+        function changeButtonColor(button, color) {
+            console.log('change color')
+            button.style.backgroundColor = color
+        }
+
+        async function fetchFan() {
+            try {
+                const response = await fetch('/api/fan')
+                const data = await response.json()
+
+
+                if (data) {
+                    document.querySelector('#fan').checked = data.condition
+                    const fanSpeedButton = document.getElementById('fan_speed');
+                    currSpeed = data.speed_mode
+                    let color = colorConverter(currSpeed)
+                    changeButtonColor(fanSpeedButton, color)
+                }
+            } catch (e) {
+                console.error(e)
+            }
+        }
+
+        window.onload = fetchFan;
+
+        function updateFanCondition(isChecked) {
+            const url = `/api/fan/condition`;
+
+            // Make the PUT request
+            fetch(url, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.message);  // Log success message
+            })
+            .catch(error => {
+                console.error("Error:", error);
+            });
+        }
+
+        document.querySelector("#fan").addEventListener("change", function() {
+            updateFanCondition(this.checked);
+        });
+
+        function updateFanSpeed(speed){
+            if (speed >=4) {
+                speed = speed - 3
+                currSpeed = speed
+            }
+
+            const fanSpeedButton = document.getElementById('fan_speed')
+            let color = colorConverter(speed)
+            changeButtonColor(fanSpeedButton, color)
+
+            const url = `/api/fan/speed/${speed}`;
+
+            fetch(url, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.message);  // Log success message
+            })
+            .catch(error => {
+                console.error("Error:", error);
+            });
+
+            currSpeed = speed
+        }
+
+        document.querySelector("#fan_speed").addEventListener("click", function() {
+            updateFanSpeed(currSpeed + 1);
+        });
+
+    </script>
+</body>
+</html>
