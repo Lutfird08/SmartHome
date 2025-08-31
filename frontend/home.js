@@ -11,7 +11,7 @@ function toggleMenu() {
 
 function postChatWithBot(chat) {
     // Gunakan alamat backend yang benar
-    const url = `${BACKEND_URL}/api/chat-simple`;
+    const url = `${BACKEND_URL}/chat-simple`;
 
     return fetch(url, {
         method: "POST",
