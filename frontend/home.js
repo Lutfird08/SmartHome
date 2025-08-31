@@ -1,3 +1,8 @@
+// GANTI SEMUA ISI FILE home.js DENGAN KODE INI
+
+// Definisikan alamat backend Anda di satu tempat
+const BACKEND_URL = 'https://smarthome-backend-production-1d56.up.railway.app';
+
 let recognition;
 
 function toggleMenu() {
@@ -5,14 +10,15 @@ function toggleMenu() {
 }
 
 function postChatWithBot(chat) {
-    const url = `/api/chat-simple`;
+    // Gunakan alamat backend yang benar
+    const url = `${BACKEND_URL}/api/chat-simple`;
 
     return fetch(url, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify({chat})
+        body: JSON.stringify({ chat })
     })
         .then(response => {
             if (!response.ok) {
@@ -21,15 +27,14 @@ function postChatWithBot(chat) {
             return response.json();
         })
         .then(data => {
-            console.log(data.message);  // Optional: log success message
-            return data;  // Return the actual data
+            console.log(data.message); // Optional: log success message
+            return data; // Return the actual data
         })
         .catch(error => {
             console.error("Error:", error);
-            throw error;  // Re-throw so caller can handle it
+            throw error; // Re-throw so caller can handle it
         });
 }
-
 
 function sendMessage() {
     let input = document.getElementById("userInput");
@@ -54,8 +59,12 @@ function addMessage(text, className) {
 }
 
 async function processCommand(command) {
-    const response = await postChatWithBot(command);
-    setTimeout(() => addMessage(response.response, "assistant-message"), 1000);
+    try {
+        const response = await postChatWithBot(command);
+        setTimeout(() => addMessage(response.response, "assistant-message"), 1000);
+    } catch (error) {
+        addMessage("Maaf, terjadi kesalahan saat menghubungi asisten.", "assistant-message");
+    }
 }
 
 function startVoiceRecognition() {
@@ -65,24 +74,24 @@ function startVoiceRecognition() {
         recognition.interimResults = false;
         recognition.lang = 'id-ID';
 
-        recognition.onstart = function() {
+        recognition.onstart = function () {
             document.getElementById("userInput").placeholder = "Mendengarkan...";
             document.querySelector('.input-area button:last-child').classList.add('active');
         };
 
-        recognition.onresult = function(event) {
+        recognition.onresult = function (event) {
             var transcript = event.results[0][0].transcript;
             document.getElementById("userInput").value = transcript;
             sendMessage();
         };
 
-        recognition.onerror = function(event) {
+        recognition.onerror = function (event) {
             console.error('Speech recognition error:', event.error);
             document.getElementById("userInput").placeholder = "Masukkan Perintah...";
             document.querySelector('.input-area button:last-child').classList.remove('active');
         };
 
-        recognition.onend = function() {
+        recognition.onend = function () {
             document.getElementById("userInput").placeholder = "Masukkan Perintah...";
             document.querySelector('.input-area button:last-child').classList.remove('active');
         };
@@ -103,24 +112,22 @@ function updateDateTime() {
 }
 
 setInterval(updateDateTime, 1000);
-
 updateDateTime();
-
 
 async function updateStatus() {
     try {
-        // Fetch lamp status
-        const lampResponse = await fetch('/api/lamp/one');
+        // Fetch lamp status dengan alamat backend yang benar
+        const lampResponse = await fetch(`${BACKEND_URL}/api/lamp/one`);
         const lampData = await lampResponse.json();
         document.querySelector('#lamp').textContent = lampData.condition ? 'Aktif' : 'Nonaktif';
 
-        // Fetch AC status
-        const acResponse = await fetch('/api/ac');
+        // Fetch AC status dengan alamat backend yang benar
+        const acResponse = await fetch(`${BACKEND_URL}/api/ac`);
         const acData = await acResponse.json();
         document.querySelector('#ac').textContent = acData.condition ? 'Aktif' : 'Nonaktif';
 
-        // Fetch door lock status
-        const doorResponse = await fetch('/api/door');
+        // Fetch door lock status dengan alamat backend yang benar
+        const doorResponse = await fetch(`${BACKEND_URL}/api/door`);
         const doorData = await doorResponse.json();
         document.querySelector('#door').textContent = doorData.condition ? 'Aktif' : 'Nonaktif';
 
@@ -129,6 +136,6 @@ async function updateStatus() {
     }
 }
 
-// Call updateStatus immediately when the script loads
+// Panggil updateStatus saat skrip dimuat dan setiap beberapa detik
 updateStatus();
-setInterval(updateStatus, 1000);
+setInterval(updateStatus, 5000); // Diubah menjadi 5 detik agar tidak terlalu sering
