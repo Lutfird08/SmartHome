@@ -10,7 +10,7 @@ function toggleMenu() {
 }
 
 function postChatWithBot(chat) {
-    // Gunakan alamat backend yang benar
+    // Gunakan alamat backend yang benar (tanpa /api)
     const url = `${BACKEND_URL}/chat-simple`;
 
     return fetch(url, {
@@ -116,18 +116,18 @@ updateDateTime();
 
 async function updateStatus() {
     try {
-        // Fetch lamp status dengan alamat backend yang benar
-        const lampResponse = await fetch(`${BACKEND_URL}/api/lamp/one`);
+        // Fetch lamp status dengan alamat backend yang benar (tanpa /api)
+        const lampResponse = await fetch(`${BACKEND_URL}/lamp/one`);
         const lampData = await lampResponse.json();
         document.querySelector('#lamp').textContent = lampData.condition ? 'Aktif' : 'Nonaktif';
 
-        // Fetch AC status dengan alamat backend yang benar
-        const acResponse = await fetch(`${BACKEND_URL}/api/ac`);
+        // Fetch AC status dengan alamat backend yang benar (tanpa /api)
+        const acResponse = await fetch(`${BACKEND_URL}/ac`);
         const acData = await acResponse.json();
         document.querySelector('#ac').textContent = acData.condition ? 'Aktif' : 'Nonaktif';
 
-        // Fetch door lock status dengan alamat backend yang benar
-        const doorResponse = await fetch(`${BACKEND_URL}/api/door`);
+        // Fetch door lock status dengan alamat backend yang benar (tanpa /api)
+        const doorResponse = await fetch(`${BACKEND_URL}/door`);
         const doorData = await doorResponse.json();
         document.querySelector('#door').textContent = doorData.condition ? 'Aktif' : 'Nonaktif';
 
