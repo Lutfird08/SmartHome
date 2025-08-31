@@ -39,7 +39,7 @@ six==1.17.0
 SpeechRecognition==3.14.3
 tensorboard==2.19.0
 tensorboard-data-server==0.7.2
-tensorflow==2.19.0
+tensorflow-cpu
 termcolor==3.1.0
 tqdm==4.67.1
 typing_extensions==4.13.2
