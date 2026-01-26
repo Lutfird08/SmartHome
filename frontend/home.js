@@ -1,5 +1,5 @@
 // ==========================================
-//  HOME.JS - SMART HOME FINAL VERSION
+//  HOME.JS - SMART HOME FINAL (FIXED VOICE)
 // ==========================================
 
 // --- 1. KONFIGURASI MQTT ---
@@ -9,21 +9,21 @@ const MQTT_TOPIC_PREFIX = 'lutfi_140910/smart_home/';
 let mqttClient = null;
 let isConnected = false;
 
+// Variabel untuk menyimpan suara Indonesia
+let indoVoice = null;
+
 // --- 2. MAPPING PERANGKAT (Arduino Name -> HTML ID) ---
-// Kiri: Nama yang dikirim Arduino (Huruf Kecil)
-// Kanan: ID elemen HTML yang akan diubah warnanya
 const deviceMap = {
     "lampu utama": "lamp",
-    "lampu kamar": "lamp", // Opsional: jika ingin icon sama
+    "lampu kamar": "lamp", 
     "solenoid door": "door",
-    "ac": "status-ac"      // ID ini ada di halaman AC (ac.html) atau home.html
+    "ac": "status-ac"      
 };
 
 // --- 3. KONEKSI MQTT ---
 function connectToMQTT() {
     console.log('Menghubungkan ke MQTT...');
     
-    // Buat ID Client unik agar tidak bentrok
     const options = {
         clientId: 'WebClient_' + Math.random().toString(16).substr(2, 8),
         clean: true,
@@ -37,11 +37,10 @@ function connectToMQTT() {
         isConnected = true;
         updateConnectionStatus(true);
         
-        // Subscribe ke SEMUA topik (input, reply, status, sensor)
+        // Subscribe ke SEMUA topik
         mqttClient.subscribe(MQTT_TOPIC_PREFIX + '#');
         
-        // PENTING: Minta status awal ke Arduino agar tidak "Unknown"
-        // Diberi jeda 1.5 detik agar koneksi stabil dulu
+        // Minta status awal ke Arduino (Jeda 1.5 detik agar stabil)
         setTimeout(() => {
             console.log("Meminta status awal...");
             sendToPython("STATUS");
@@ -58,8 +57,7 @@ function connectToMQTT() {
 
 // --- 4. HANDLER PESAN MASUK ---
 function handleIncomingMessage(topic, message) {
-    // A. DATA SENSOR (Tampilkan di Chat)
-    // Format Arduino: "SENSOR: LDR:100, Soil:200, Temp:28.00"
+    // A. DATA SENSOR
     if (message.startsWith("SENSOR:")) {
         const cleanMsg = message.replace("SENSOR:", "").trim();
         addChatMessage('Sensor', cleanMsg);
@@ -73,14 +71,12 @@ function handleIncomingMessage(topic, message) {
         return;
     }
 
-    // C. STATUS REALTIME (Update Icon & Teks)
-    // Format Arduino: "Nama Alat: Status"
+    // C. STATUS REALTIME
     if (message.includes(':')) {
         const parts = message.split(':');
         if (parts.length >= 2) {
             const devName = parts[0].trim().toLowerCase();
             const devStatus = parts[1].trim();
-            
             updateUIFromResponse(devName, devStatus);
         }
     }
@@ -88,26 +84,20 @@ function handleIncomingMessage(topic, message) {
 
 // --- 5. UPDATE TAMPILAN (UI) ---
 function updateUIFromResponse(name, status) {
-    // Loop mapping untuk mencocokkan nama alat
     for (const [key, elementId] of Object.entries(deviceMap)) {
         if (name.includes(key)) {
             const el = document.getElementById(elementId);
-            
-            // Hanya update jika elemen ada di halaman ini
             if (el) {
-                // Cek status ON/OFF
-                const isNyala = status.toUpperCase() === 'ON' || 
-                                status.toUpperCase() === 'TERBUKA' ||
+                const isNyala = status.toUpperCase().includes('ON') || 
+                                status.toUpperCase().includes('TERBUKA') ||
                                 status.toUpperCase().includes('NYALA');
                 
-                // Ubah Teks sesuai jenis alat
                 if (elementId === 'door') {
                     el.innerText = isNyala ? "Terbuka" : "Terkunci";
                 } else {
                     el.innerText = isNyala ? "Nyala" : "Mati";
                 }
 
-                // Ubah Warna (Hijau = Aktif, Merah = Mati)
                 el.style.color = isNyala ? "#4CAF50" : "#f44336";
                 el.style.fontWeight = "bold";
             }
@@ -118,7 +108,6 @@ function updateUIFromResponse(name, status) {
 // --- 6. KIRIM PERINTAH ---
 function sendToPython(text) {
     if (isConnected) {
-        // Kirim ke topik voice_input agar Python yang memproses
         mqttClient.publish(MQTT_TOPIC_PREFIX + 'voice_input', text.toLowerCase());
         console.log("Dikirim:", text);
     } else {
@@ -131,74 +120,58 @@ function sendMessage() {
     const msg = input.value.trim();
     if (msg === '') return;
 
-    addChatMessage('Anda', msg); // Tampilkan ketikan user
-    sendToPython(msg);           // Kirim ke Python
-    input.value = '';            // Kosongkan input
+    addChatMessage('Anda', msg);
+    sendToPython(msg);
+    input.value = '';
 }
 
-// --- 7. FITUR CHAT & SUARA ---
-function addChatMessage(sender, message) {
-    const chatBox = document.getElementById('chatMessages');
-    if (!chatBox) return;
+// --- 7. FITUR CHAT & SUARA (YANG DIPERBAIKI) ---
+
+// Fungsi Load Suara Indonesia
+function loadVoices() {
+    const voices = window.speechSynthesis.getVoices();
+    // Cari suara Google Bahasa Indonesia atau ID-ID
+    indoVoice = voices.find(v => v.name === 'Google Bahasa Indonesia') || 
+                voices.find(v => v.lang === 'id-ID') || 
+                voices.find(v => v.lang === 'id_ID');
     
-    const div = document.createElement('div');
-    
-    // Style dasar pesan
-    div.style.marginBottom = '10px';
-    div.style.padding = '10px';
-    div.style.borderRadius = '10px';
-    div.style.maxWidth = '85%';
-    div.style.fontSize = '14px';
-    div.style.lineHeight = '1.4';
-    
-    // Style berbeda tiap pengirim
-    if (sender === 'Anda') {
-        div.style.marginLeft = 'auto';
-        div.style.backgroundColor = '#e3f2fd'; // Biru muda
-        div.style.textAlign = 'right';
-        div.innerHTML = `<strong>${sender}</strong><br>${message}`;
-    } else if (sender === 'Sensor') {
-        div.style.marginRight = 'auto';
-        div.style.backgroundColor = '#fff3e0'; // Kuning muda (Sensor)
-        div.style.border = '1px solid #ffe0b2';
-        div.innerHTML = `<strong>📡 Data Sensor</strong><br>${message}`;
-    } else if (sender === 'System') {
-        div.style.margin = '15px auto';
-        div.style.backgroundColor = '#e8f5e9'; // Hijau muda (Info)
-        div.style.textAlign = 'center';
-        div.style.width = '90%';
-        div.innerHTML = `${message}`;
-    } else { // Bot
-        div.style.marginRight = 'auto';
-        div.style.backgroundColor = '#f5f5f5'; // Abu muda
-        div.innerHTML = `<strong>${sender}</strong><br>${message}`;
-    }
-    
-    chatBox.appendChild(div);
-    chatBox.scrollTop = chatBox.scrollHeight; // Auto scroll ke bawah
+    if (indoVoice) console.log("✅ Suara Indonesia dimuat:", indoVoice.name);
 }
 
-// Text to Speech (Web Bicara)
+// Event listener saat suara browser siap
+if ('speechSynthesis' in window) {
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+// Fungsi Bicara
 function speak(text) {
     if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel(); // Stop suara sebelumnya
+        window.speechSynthesis.cancel();
+        
         const u = new SpeechSynthesisUtterance(text);
-        u.lang = 'id-ID'; // Bahasa Indonesia
+        u.lang = 'id-ID';
+        u.rate = 0.95; // Kecepatan sedikit lebih lambat agar jelas
+        u.pitch = 1.0;
+        
+        // Paksa pakai suara Indonesia jika ketemu
+        if (!indoVoice) loadVoices();
+        if (indoVoice) u.voice = indoVoice;
+
         window.speechSynthesis.speak(u);
     }
 }
 
-// Speech to Text (Web Mendengar)
+// Fungsi Mendengar
 function startVoiceRecognition() {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        alert("Browser ini tidak mendukung fitur suara. Gunakan Chrome."); return;
+        alert("Browser tidak support suara. Gunakan Chrome."); return;
     }
     const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new Rec();
     recognition.lang = 'id-ID';
     recognition.start();
 
-    addChatMessage('System', '🎤 Mendengarkan suara Anda...');
+    addChatMessage('System', '🎤 Mendengarkan...');
 
     recognition.onresult = (e) => {
         const txt = e.results[0][0].transcript;
@@ -207,13 +180,51 @@ function startVoiceRecognition() {
     };
 }
 
-// --- 8. STATUS KONEKSI & WAKTU ---
+function addChatMessage(sender, message) {
+    const chatBox = document.getElementById('chatMessages');
+    if (!chatBox) return;
+    
+    const div = document.createElement('div');
+    
+    // Styling
+    div.style.marginBottom = '10px';
+    div.style.padding = '10px';
+    div.style.borderRadius = '10px';
+    div.style.maxWidth = '85%';
+    div.style.fontSize = '14px';
+    
+    if (sender === 'Anda') {
+        div.style.marginLeft = 'auto';
+        div.style.backgroundColor = '#e3f2fd';
+        div.style.textAlign = 'right';
+        div.innerHTML = `<strong>${sender}</strong><br>${message}`;
+    } else if (sender === 'Sensor') {
+        div.style.marginRight = 'auto';
+        div.style.backgroundColor = '#fff3e0';
+        div.style.border = '1px solid #ffe0b2';
+        div.innerHTML = `<strong>📡 Data Sensor</strong><br>${message}`;
+    } else if (sender === 'System') {
+        div.style.margin = '15px auto';
+        div.style.backgroundColor = '#e8f5e9';
+        div.style.textAlign = 'center';
+        div.style.width = '90%';
+        div.innerHTML = `${message}`;
+    } else { // Bot
+        div.style.marginRight = 'auto';
+        div.style.backgroundColor = '#f5f5f5';
+        div.innerHTML = `<strong>${sender}</strong><br>${message}`;
+    }
+    
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// --- 8. STATUS & WAKTU ---
 function updateConnectionStatus(connected) {
     const els = document.querySelectorAll('.status-text');
     els.forEach(el => {
-        // Hanya ubah jika status masih Unknown/Loading
         if (el.innerText === 'Unknown' || el.innerText === 'Loading...') {
-            el.innerText = connected ? "Mati" : "Offline"; // Default aman
+            el.innerText = connected ? "Mati" : "Offline";
             el.style.color = connected ? "#f44336" : "#9e9e9e";
         }
     });
@@ -227,16 +238,15 @@ function updateDateTime() {
     if(elDate) elDate.innerText = now.toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
 }
 
-// --- 9. INITIALIZATION (SAAT HALAMAN DIMUAT) ---
+// --- 9. INITIALIZATION ---
 window.onload = function() {
-    // 1. Jalankan Jam
     updateDateTime();
     setInterval(updateDateTime, 60000);
-    
-    // 2. Koneksi ke MQTT
     connectToMQTT();
     
-    // 3. Tampilkan Pesan Selamat Datang (Delay 1 detik)
+    // Load suara saat awal buka
+    if ('speechSynthesis' in window) loadVoices();
+    
     setTimeout(() => {
         const welcomeText = `
             <strong>👋 Selamat Datang di Smart Home!</strong><br><br>
@@ -249,7 +259,6 @@ window.onload = function() {
         addChatMessage('System', welcomeText);
     }, 1000);
 
-    // 4. Listener tombol Enter di keyboard
     const input = document.getElementById('userInput');
     if (input) {
         input.addEventListener('keypress', (e) => {
@@ -258,7 +267,6 @@ window.onload = function() {
     }
 };
 
-// Export fungsi ke HTML agar bisa diklik
 window.sendMessage = sendMessage;
 window.startVoiceRecognition = startVoiceRecognition;
 window.sendToPython = sendToPython;
