@@ -1,0 +1,333 @@
+body {
+    font-family: Poppins, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
+}
+.header {
+    background-color: white;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.logo {
+    display: flex;
+    align-items: center;
+}
+.logo img {
+    width: 40px;
+    margin-right: 10px;
+}
+.menu-icon {
+    font-size: 24px;
+    cursor: pointer;
+}
+.chat-container {
+    max-width: 600px;
+    margin: 20px auto;
+    background-color: white;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.chat-messages {
+    padding: 20px;
+    height: 400px;
+    overflow-y: auto;
+}
+.message {
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    max-width: 70%;
+}
+.user-message {
+    background-color: #ffc107;
+    align-self: flex-end;
+    margin-left: auto;
+}
+.assistant-message {
+    background-color: #f0f0f0;
+}
+.input-area {
+    display: flex;
+    padding: 10px;
+    background-color: #f0f0f0;
+}
+.input-area input {
+    flex-grow: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 20px;
+}
+.input-area button {
+    background: none;
+    border: none;
+    font-size: 24px;
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+.input-area button.active {
+    background-color: #ffc107;
+    border-radius: 50%;
+}
+
+.input-area button img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+.hamburger-menu {
+    position: fixed;
+    top: 0;
+    right: -250px;
+    width: 250px;
+    height: 100%;
+    background-color: #ffc107;
+    transition: 0.3s;
+    z-index: 1000;
+}
+.hamburger-menu.active {
+    right: 0;
+}
+.menu-items {
+    padding: 20px;
+    list-style-type: none;
+}
+.menu-items li {
+    margin-bottom: 15px;
+}
+.menu-items a {
+    color: black;
+    text-decoration: none;
+}
+.close-menu {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.status-card {
+    background-color: #ffc107;
+    border-radius: 10px;
+    padding: 15px;
+    margin: 20px auto;
+    max-width: 600px;
+    text-align: center;
+}
+
+.time {
+    font-size: 36px;
+    font-weight: bold;
+}
+
+.date {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.status-icons {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 10px;
+}
+
+.status-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.status-icon {
+    margin-bottom: 5px;
+}
+
+.status-icon img {
+    width: 24px;
+    height: 24px;
+}
+
+.status-text {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Tambahkan di file home.css */
+.status-text {
+    transition: color 0.3s ease;
+}
+
+/* Warna status */
+.status-on {
+    color: #4CAF50 !important;
+    font-weight: bold;
+}
+
+.status-off {
+    color: #f44336 !important;
+}
+
+.status-unknown {
+    color: #ff9800 !important;
+}
+
+/* Chat messages */
+.message {
+    padding: 8px 12px;
+    margin: 5px 0;
+    border-radius: 15px;
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+.message.user {
+    background-color: #e3f2fd;
+    margin-left: auto;
+    text-align: right;
+}
+
+.message.system {
+    background-color: #f5f5f5;
+    margin-right: auto;
+}
+
+/* Tambahkan di file home.css atau buat file terpisah */
+
+/* Chat messages styling */
+.chat-messages {
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+}
+
+.message {
+    padding: 8px 12px;
+    margin: 5px 0;
+    border-radius: 15px;
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+.message.user {
+    background-color: #e3f2fd;
+    margin-left: auto;
+    text-align: right;
+    border-bottom-right-radius: 5px;
+}
+
+.message.system {
+    background-color: #f5f5f5;
+    margin-right: auto;
+    border-bottom-left-radius: 5px;
+}
+
+.message strong {
+    color: #333;
+}
+
+/* Input area */
+.input-area {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.input-area input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+.input-area button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.input-area button:hover {
+    background-color: #45a049;
+}
+
+.input-area button img {
+    width: 20px;
+    height: 20px;
+}
+
+/* Status colors */
+.status-on {
+    color: #4CAF50 !important;
+    font-weight: bold;
+}
+
+.status-off {
+    color: #f44336 !important;
+}
+
+.status-unknown {
+    color: #ff9800 !important;
+}
+
+/* Hamburger menu */
+.hamburger-menu {
+    position: fixed;
+    top: 0;
+    right: -300px;
+    width: 250px;
+    height: 100%;
+    background-color: white;
+    box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+    transition: right 0.3s ease;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.hamburger-menu.active {
+    right: 0;
+}
+
+.close-menu {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.menu-items {
+    list-style: none;
+    padding: 0;
+    margin-top: 40px;
+}
+
+.menu-items li {
+    margin: 10px 0;
+}
+
+.menu-items a {
+    text-decoration: none;
+    color: #333;
+    font-size: 16px;
+    display: block;
+    padding: 10px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.menu-items a:hover {
+    background-color: #f0f0f0;
+}

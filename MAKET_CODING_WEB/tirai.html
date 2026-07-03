@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <title>Smart Home Curtain Control</title>
+    <style>
+        body {
+            font-family: Poppins, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .header {
+            background-color: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        .logo img {
+            width: 40px;
+            margin-right: 10px;
+        }
+        .mqtt-status {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background-color: #ff9800;
+            color: white;
+            font-weight: bold;
+        }
+        .mqtt-status.connected {
+            background-color: #4CAF50;
+        }
+        .mqtt-status.disconnected {
+            background-color: #f44336;
+        }
+        .mqtt-status.connecting {
+            background-color: #ff9800;
+        }
+        .container {
+            padding: 100px 20px 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .curtain-status-card {
+            background-color: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .curtain-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .curtain-icon img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .curtain-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .curtain-status {
+            font-size: 18px;
+            font-weight: 500;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .curtain-status.open {
+            color: #4CAF50;
+        }
+        .curtain-status.closed {
+            color: #ff9800;
+        }
+        .curtain-status.moving {
+            color: #2196F3;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .button-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+        .control-button {
+            padding: 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .control-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .control-button:active {
+            transform: translateY(0);
+        }
+        .control-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-open {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .btn-open:hover:not(:disabled) {
+            background-color: #45a049;
+        }
+        .btn-close {
+            background-color: #ff9800;
+            color: white;
+        }
+        .btn-close:hover:not(:disabled) {
+            background-color: #e68900;
+        }
+        .btn-stop {
+            background-color: #f44336;
+            color: white;
+        }
+        .btn-stop:hover:not(:disabled) {
+            background-color: #d32f2f;
+        }
+        .button-icon {
+            font-size: 28px;
+        }
+        .back-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #ffc107;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            z-index: 100;
+        }
+        .back-button:hover {
+            background-color: #e8b007;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            transform: translateY(-2px);
+        }
+        .notification {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1000;
+            font-size: 14px;
+        }
+        .notification.error {
+            background-color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <img src="https://www.unpad.ac.id/wp-content/uploads/2018/04/logo-unpad1.png" alt="Logo">
+            <span>Smart Home - Kontrol Tirai</span>
+        </div>
+        <div id="mqttStatus" class="mqtt-status">MQTT: Connecting...</div>
+    </div>
+    
+    <div id="notification" class="notification"></div>
+    
+    <div class="container">
+        <div class="curtain-status-card">
+            <div class="curtain-icon">
+                <img src="Asset/curtains.png" alt="curtain">
+            </div>
+            <div class="curtain-title">Tirai Ruangan</div>
+            <div id="curtainStatus" class="curtain-status closed">Status: TERTUTUP</div>
+            
+            <div class="button-container">
+                <button id="btnOpen" class="control-button btn-open">
+                    <span class="button-icon">⬆️</span>
+                    <span>BUKA</span>
+                </button>
+                <button id="btnStop" class="control-button btn-stop">
+                    <span class="button-icon">⏹️</span>
+                    <span>STOP</span>
+                </button>
+                <button id="btnClose" class="control-button btn-close">
+                    <span class="button-icon">⬇️</span>
+                    <span>TUTUP</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <a href="home.html" class="back-button">&#8592;</a>
+
+    <script>
+        const MQTT_BROKER_URL = 'wss://broker.emqx.io:8084/mqtt';
+        const MQTT_TOPIC_PREFIX = 'smart_home/';
+        
+        let mqttClient = null;
+        let isConnected = false;
+        let curtainState = 'closed'; // 'open', 'closed', 'moving'
+        let isMoving = false;
+        
+        // Fungsi koneksi MQTT
+        function connectToMQTT() {
+            console.log('Menghubungkan ke MQTT...');
+            updateMqttStatus('Connecting', 'connecting');
+            
+            const options = {
+                clientId: 'smart_home_curtain_' + Math.random().toString(16).substr(2, 8),
+                clean: true,
+                reconnectPeriod: 1000,
+                connectTimeout: 30000
+            };
+        
+            mqttClient = mqtt.connect(MQTT_BROKER_URL, options);
+        
+            mqttClient.on('connect', () => {
+                console.log('✅ Terhubung ke MQTT');
+                isConnected = true;
+                updateMqttStatus('Connected', 'connected');
+                
+                subscribeToTopics();
+                
+                setTimeout(() => {
+                    sendCommand('STATUS');
+                    showNotification('✅ Terhubung ke sistem Smart Home', 'success');
+                }, 1000);
+            });
+        
+            mqttClient.on('message', (topic, message) => {
+                handleMessage(topic, message.toString());
+            });
+        
+            mqttClient.on('error', (error) => {
+                console.error('MQTT Error:', error);
+                updateMqttStatus('Error', 'disconnected');
+                isConnected = false;
+                showNotification('❌ Error koneksi MQTT', 'error');
+            });
+            
+            mqttClient.on('close', () => {
+                console.log('MQTT disconnected');
+                updateMqttStatus('Disconnected', 'disconnected');
+                isConnected = false;
+            });
+        }
+        
+        // Subscribe ke topik
+        function subscribeToTopics() {
+            const topics = [
+                MQTT_TOPIC_PREFIX + 'response',
+                MQTT_TOPIC_PREFIX + 'status',
+                MQTT_TOPIC_PREFIX + 'sensor'
+            ];
+        
+            topics.forEach(topic => {
+                mqttClient.subscribe(topic, { qos: 0 }, (err) => {
+                    if (!err) {
+                        console.log('Subscribed to:', topic);
+                    }
+                });
+            });
+        }
+        
+        // Handle pesan masuk
+        function handleMessage(topic, message) {
+            console.log('Received:', topic, '=>', message);
+            
+            // Skip system messages
+            if (message.includes("SISTEM KONTROL RUMAH") || 
+                message.includes("PERINTAH SERIAL:") ||
+                message.includes("Catatan:") ||
+                message.startsWith("ARDUINO_MEGA:") ||
+                message.startsWith("ESP32:") ||
+                message.includes("===============================")) {
+                return;
+            }
+            
+            // Parse curtain status
+            const msgLower = message.toLowerCase();
+            
+            // Check untuk message tirai
+            if (msgLower.includes('tirai')) {
+                if (msgLower.includes('buka') || msgLower.includes('terbuka')) {
+                    updateCurtainUI('open');
+                    isMoving = false;
+                    showNotification('✅ Tirai berhasil dibuka', 'success');
+                } 
+                else if (msgLower.includes('tutup') || msgLower.includes('tertutup')) {
+                    updateCurtainUI('closed');
+                    isMoving = false;
+                    showNotification('✅ Tirai berhasil ditutup', 'success');
+                }
+                else if (msgLower.includes('stop') || msgLower.includes('berhenti')) {
+                    isMoving = false;
+                    updateCurtainUI(curtainState);
+                    showNotification('⏹️ Tirai dihentikan', 'success');
+                }
+            }
+        }
+        
+        // Update status MQTT
+        function updateMqttStatus(text, statusClass) {
+            const element = document.getElementById('mqttStatus');
+            if (element) {
+                element.textContent = `MQTT: ${text}`;
+                element.className = 'mqtt-status ' + statusClass;
+            }
+        }
+        
+        // Update UI tirai
+        function updateCurtainUI(state) {
+            if (!isMoving) {
+                curtainState = state;
+            }
+            
+            const statusElement = document.getElementById('curtainStatus');
+            const btnOpen = document.getElementById('btnOpen');
+            const btnClose = document.getElementById('btnClose');
+            const btnStop = document.getElementById('btnStop');
+            
+            if (statusElement) {
+                if (isMoving) {
+                    statusElement.textContent = 'Status: BERGERAK...';
+                    statusElement.className = 'curtain-status moving';
+                    btnOpen.disabled = true;
+                    btnClose.disabled = true;
+                    btnStop.disabled = false;
+                } else {
+                    if (state === 'open') {
+                        statusElement.textContent = 'Status: TERBUKA';
+                        statusElement.className = 'curtain-status open';
+                        btnOpen.disabled = true;
+                        btnClose.disabled = false;
+                    } 
+                    else if (state === 'closed') {
+                        statusElement.textContent = 'Status: TERTUTUP';
+                        statusElement.className = 'curtain-status closed';
+                        btnOpen.disabled = false;
+                        btnClose.disabled = true;
+                    }
+                    btnStop.disabled = true;
+                }
+            }
+            
+            console.log(`Curtain state updated: ${state}, Moving: ${isMoving}`);
+        }
+        
+        // Kirim perintah ke Arduino
+        function sendCommand(command) {
+            if (!isConnected || !mqttClient) {
+                showNotification('❌ Tidak terhubung ke server MQTT', 'error');
+                return false;
+            }
+            
+            const topic = MQTT_TOPIC_PREFIX + 'control';
+            console.log('Sending:', command);
+            
+            mqttClient.publish(topic, command, { qos: 0 }, (err) => {
+                if (err) {
+                    console.error('Failed to send:', err);
+                    showNotification('❌ Gagal mengirim perintah', 'error');
+                    return false;
+                }
+            });
+            
+            return true;
+        }
+        
+        // Buka tirai
+        function openCurtain() {
+            isMoving = true;
+            updateCurtainUI('open');
+            
+            if (sendCommand('TIRAIBUKA')) {
+                showNotification('📤 Membuka tirai (500ms)...', 'info');
+                
+                // Auto stop setelah 500ms
+                setTimeout(() => {
+                    if (isMoving) {
+                        curtainState = 'open';
+                        isMoving = false;
+                        updateCurtainUI('open');
+                    }
+                }, 500);
+            } else {
+                isMoving = false;
+                updateCurtainUI(curtainState);
+            }
+        }
+        
+        // Tutup tirai
+        function closeCurtain() {
+            isMoving = true;
+            updateCurtainUI('closed');
+            
+            if (sendCommand('TIRAITUTUP')) {
+                showNotification('📤 Menutup tirai (500ms)...', 'info');
+                
+                // Auto stop setelah 500ms
+                setTimeout(() => {
+                    if (isMoving) {
+                        curtainState = 'closed';
+                        isMoving = false;
+                        updateCurtainUI('closed');
+                    }
+                }, 500);
+            } else {
+                isMoving = false;
+                updateCurtainUI(curtainState);
+            }
+        }
+        
+        // Stop tirai
+        function stopCurtain() {
+            if (sendCommand('TIRAIOFF')) {
+                showNotification('⏹️ Menghentikan tirai...', 'info');
+                isMoving = false;
+                updateCurtainUI(curtainState);
+            }
+        }
+        
+        // Tampilkan notifikasi
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            if (notification) {
+                notification.textContent = message;
+                notification.className = 'notification';
+                
+                if (type === 'error') {
+                    notification.classList.add('error');
+                }
+                
+                notification.style.display = 'block';
+                
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, 3000);
+            }
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            const btnOpen = document.getElementById('btnOpen');
+            const btnClose = document.getElementById('btnClose');
+            const btnStop = document.getElementById('btnStop');
+            
+            if (btnOpen) {
+                btnOpen.addEventListener('click', openCurtain);
+            }
+            
+            if (btnClose) {
+                btnClose.addEventListener('click', closeCurtain);
+            }
+            
+            if (btnStop) {
+                btnStop.addEventListener('click', stopCurtain);
+            }
+        }
+        
+        // Inisialisasi saat halaman dimuat
+        window.onload = function() {
+            setupEventListeners();
+            connectToMQTT();
+        };
+    </script>
+</body>
+</html>

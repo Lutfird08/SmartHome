@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <title>Smart Home - AC Control</title>
+    <style>
+        body { font-family: Poppins, sans-serif; margin: 0; padding: 0; background-color: #f0f0f0; }
+        .header {
+            background-color: white; padding: 10px 20px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+        }
+        .logo { display: flex; align-items: center; }
+        .logo img { width: 40px; margin-right: 10px; }
+        .mqtt-status { font-size: 12px; padding: 4px 8px; border-radius: 4px; background-color: #ff9800; color: white; font-weight: bold; }
+        .mqtt-status.connected { background-color: #4CAF50; }
+        .mqtt-status.disconnected { background-color: #f44336; }
+        .mqtt-status.connecting { background-color: #ff9800; }
+        .container {
+            padding: 80px 20px 20px;
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 20px; max-width: 600px; margin: 0 auto;
+        }
+        .ac-card {
+            background-color: #ffc107; border-radius: 10px; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+            transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer;
+        }
+        .ac-card.on { background-color: #4CAF50; }
+        .ac-card.off { background-color: #ffc107; }
+        .ac-card p { color: #333; font-weight: 500; margin: 0 0 15px 0; }
+        .ac-icon { width: 80px; height: 80px; display: flex; justify-content: center; align-items: center; margin-bottom: 10px; }
+        .ac-icon img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .power-button {
+            width: 70px; height: 70px; border-radius: 50%;
+            background-color: #fff; border: 3px solid #333;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s ease;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+        }
+        .power-button:hover { transform: scale(1.08); box-shadow: 0 5px 12px rgba(0,0,0,0.2); }
+        .power-button:active { transform: scale(0.95); }
+        .power-button svg { width: 36px; height: 36px; }
+        .ac-card.on .power-button { background-color: #2e7d32; border-color: #1b5e20; }
+        .ac-card.on .power-button svg path, .ac-card.on .power-button svg line { stroke: #fff; }
+        .temp-controls { display: flex; gap: 16px; margin-top: 4px; }
+        .temp-btn {
+            width: 56px; height: 56px; border-radius: 50%;
+            background-color: #fff; border: 2px solid #333;
+            font-size: 28px; font-weight: bold; color: #333;
+            cursor: pointer; transition: all 0.2s ease;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.12);
+            line-height: 1;
+        }
+        .temp-btn:hover { background-color: #333; color: #fff; transform: scale(1.08); }
+        .temp-btn:active { transform: scale(0.95); }
+        .notification {
+            position: fixed; top: 70px; right: 20px;
+            background-color: #4CAF50; color: white;
+            padding: 10px 15px; border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: none; z-index: 1000; font-size: 14px;
+        }
+        .notification.error { background-color: #f44336; }
+        .back-button {
+            position: fixed; bottom: 20px; right: 20px;
+            background-color: #ffc107; color: white; border: none;
+            border-radius: 50%; width: 60px; height: 60px; font-size: 24px;
+            cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s ease; display: flex; align-items: center;
+            justify-content: center; text-decoration: none; z-index: 100;
+        }
+        .back-button:hover { background-color: #e8b007; box-shadow: 0 6px 12px rgba(0,0,0,0.3); transform: translateY(-2px); }
+        .back-button:active { transform: translateY(0); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <img src="https://www.unpad.ac.id/wp-content/uploads/2018/04/logo-unpad1.png" alt="Logo">
+            <span>Smart Home - Kontrol AC</span>
+        </div>
+        <div id="mqttStatus" class="mqtt-status">MQTT: Connecting...</div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <div class="container">
+        <div class="ac-card off" id="acCard">
+            <div class="ac-icon"><img src="Asset/ac.png" alt="AC"></div>
+            <p>Air Conditioner</p>
+            <div class="power-button" id="acPowerBtn">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 3v9" stroke="#333" stroke-width="2.5" stroke-linecap="round"/>
+                    <path d="M7.07 5.93A9 9 0 1 0 16.93 5.93" stroke="#333" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+                </svg>
+            </div>
+        </div>
+
+        <div class="ac-card off" id="tempCard">
+            <div class="ac-icon"><img src="Asset/temperature.png" alt="Suhu"></div>
+            <p>Suhu AC</p>
+            <div class="temp-controls">
+                <button class="temp-btn" id="tempUp">▲</button>
+                <button class="temp-btn" id="tempDown">▼</button>
+            </div>
+        </div>
+    </div>
+
+    <a href="home.html" class="back-button">&#8592;</a>
+
+    <script>
+        const MQTT_BROKER_URL = 'wss://broker.emqx.io:8084/mqtt';
+        const MQTT_TOPIC_PREFIX = 'smart_home/';
+
+        let mqttClient = null;
+        let isConnected = false;
+
+        const devices = [
+            { id: 'ac',   name: 'Air Conditioner', onCommand: 'AC_POWER', offCommand: 'AC_POWER' },
+            { id: 'temp', name: 'Suhu AC',          upCommand: 'AC_UP',   downCommand: 'AC_DOWN'  }
+        ];
+
+        // Status perangkat (hanya ON/OFF, tidak ada pending)
+        let deviceStatus = { ac: false };
+        let acTemperature = 18;
+
+        function connectToMQTT() {
+            updateMqttStatus('Connecting', 'connecting');
+            const options = {
+                clientId: 'smart_home_ac_' + Math.random().toString(16).substr(2, 8),
+                clean: true, reconnectPeriod: 1000, connectTimeout: 30000
+            };
+            mqttClient = mqtt.connect(MQTT_BROKER_URL, options);
+
+            mqttClient.on('connect', () => {
+                isConnected = true;
+                updateMqttStatus('Connected', 'connected');
+                subscribeToTopics();
+                setTimeout(() => {
+                    sendCommand('STATUS');
+                    showNotification('✅ Terhubung ke sistem Smart Home', 'success');
+                }, 1000);
+            });
+            mqttClient.on('message', (topic, message) => handleMessage(topic, message.toString()));
+            mqttClient.on('error', () => {
+                updateMqttStatus('Error', 'disconnected');
+                isConnected = false;
+                showNotification('❌ Error koneksi MQTT', 'error');
+            });
+            mqttClient.on('close', () => {
+                updateMqttStatus('Disconnected', 'disconnected');
+                isConnected = false;
+            });
+        }
+
+        function subscribeToTopics() {
+            ['response', 'status', 'sensor'].forEach(t => {
+                mqttClient.subscribe(MQTT_TOPIC_PREFIX + t, { qos: 0 });
+            });
+        }
+
+        function handleMessage(topic, message) {
+            if (message.includes("SISTEM KONTROL RUMAH") ||
+                message.includes("PERINTAH SERIAL:") ||
+                message.includes("Catatan:") ||
+                message.startsWith("ARDUINO_MEGA:") ||
+                message.startsWith("ESP32:")) return;
+
+            if (message.includes(':')) {
+                const parts = message.split(':');
+                if (parts.length >= 2) {
+                    const deviceName = parts[0].trim().toLowerCase();
+
+                    // Konfirmasi AC power toggle dari Arduino (ac_power:PULSE)
+                    if (deviceName === 'ac_power') {
+                        // AC pakai IR toggle, flip state lokal
+                        const newState = !deviceStatus['ac'];
+                        updateDeviceUI('ac', newState);
+                        showNotification(`✅ AC ${newState ? 'dinyalakan' : 'dimatikan'}`, 'success');
+                    }
+
+                    // Konfirmasi suhu naik (ac_up:PULSE)
+                    if (deviceName === 'ac_up') {
+                        showNotification(`✅ Suhu dinaikkan ke ${acTemperature}°C`, 'success');
+                    }
+
+                    // Konfirmasi suhu turun (ac_down:PULSE)
+                    if (deviceName === 'ac_down') {
+                        showNotification(`✅ Suhu diturunkan ke ${acTemperature}°C`, 'success');
+                    }
+                }
+            }
+        }
+
+        function updateMqttStatus(text, statusClass) {
+            const el = document.getElementById('mqttStatus');
+            if (el) { el.textContent = `MQTT: ${text}`; el.className = 'mqtt-status ' + statusClass; }
+        }
+
+        function updateDeviceUI(deviceId, isOn) {
+            deviceStatus[deviceId] = isOn;
+
+            const card = document.getElementById(deviceId + 'Card');
+            if (card) card.className = `ac-card ${isOn ? 'on' : 'off'}`;
+        }
+
+        function updateTempUI(temp) {
+            acTemperature = temp;
+        }
+
+        function sendCommand(command) {
+            if (!isConnected || !mqttClient) {
+                showNotification('❌ Tidak terhubung ke server MQTT', 'error');
+                return false;
+            }
+            mqttClient.publish(MQTT_TOPIC_PREFIX + 'control', command, { qos: 0 });
+            return true;
+        }
+
+        function toggleDevice(deviceId) {
+            const device = devices.find(d => d.id === deviceId);
+            if (!device) return;
+
+            const newState = !deviceStatus[deviceId];
+            const command = newState ? device.onCommand : device.offCommand;
+
+            if (sendCommand(command)) {
+                updateDeviceUI(deviceId, newState);
+            }
+        }
+
+        function changeTemperature(delta) {
+            const newTemp = acTemperature + delta;
+            if (newTemp < 16 || newTemp > 32) {
+                showNotification('⚠️ Suhu hanya bisa diatur 16-32°C', 'error');
+                return;
+            }
+            const tempDevice = devices.find(d => d.id === 'temp');
+            const command = delta > 0 ? tempDevice.upCommand : tempDevice.downCommand;
+            if (sendCommand(command)) {
+                updateTempUI(newTemp);
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const el = document.getElementById('notification');
+            if (el) {
+                el.textContent = message;
+                el.className = 'notification' + (type === 'error' ? ' error' : '');
+                el.style.display = 'block';
+                setTimeout(() => { el.style.display = 'none'; }, 3000);
+            }
+        }
+
+        function setupEventListeners() {
+            document.getElementById('acPowerBtn').addEventListener('click', () => toggleDevice('ac'));
+            document.getElementById('tempUp').addEventListener('click', () => changeTemperature(1));
+            document.getElementById('tempDown').addEventListener('click', () => changeTemperature(-1));
+        }
+
+        window.onload = function() {
+            setupEventListeners();
+            connectToMQTT();
+        };
+    </script>
+</body>
+</html>
