@@ -1,0 +1,1206 @@
+{
+  "intents": [
+    {
+      "tag": "intro",
+      "patterns": [
+        "hai",
+        "halo",
+        "hallo",
+        "hey",
+        "hi",
+        "hai asisten",
+        "halo asisten",
+        "hallo asisten",
+        "hey asisten",
+        "hai asisten bantu saya",
+        "halo asisten bantu saya",
+        "hai asisten tolong bantu saya",
+        "halo asisten tolong bantu saya",
+        "dapatkah anda membantu saya",
+        "dapatkah kamu membantu saya",
+        "bisakah anda membantu saya",
+        "bisakah kamu membantu saya",
+        "aku butuh bantuan",
+        "saya butuh bantuan",
+        "ada yang bisa dibantu",
+        "apa yang bisa kamu lakukan",
+        "tolong bantu saya",
+        "bantu aku",
+        "bantu saya",
+        "hei asisten",
+        "permisi asisten",
+        "asisten"
+      ],
+      "responses": [
+        "Halo saya siap membantu anda",
+        "halo saya bersedia membantu anda",
+        "halo katakan apa yang dapat saya bantu",
+        "halo katakan apa yang anda butuhkan",
+        "halo saya selalu siap membantu anda",
+        "halo apa yang saya dapat lakukan untuk membantu anda"
+      ]
+    },
+    {
+      "tag": "pagi",
+      "patterns": [
+        "selamat pagi",
+        "pagi",
+        "hai selamat pagi",
+        "halo selamat pagi",
+        "hai asisten selamat pagi",
+        "halo asisten selamat pagi",
+        "good morning",
+        "pagi asisten",
+        "met pagi"
+      ],
+      "responses": [
+        "Halo selamat pagi katakan apa yang dapat saya bantu",
+        "halo selamat pagi apa yang saya dapat lakukan untuk membantu anda"
+      ]
+    },
+    {
+      "tag": "siang",
+      "patterns": [
+        "selamat siang",
+        "siang",
+        "hai selamat siang",
+        "halo selamat siang",
+        "hai asisten selamat siang",
+        "halo asisten selamat siang",
+        "siang asisten",
+        "met siang"
+      ],
+      "responses": [
+        "Halo selamat siang katakan apa yang dapat saya bantu",
+        "halo selamat siang apa yang saya dapat lakukan untuk membantu anda"
+      ]
+    },
+    {
+      "tag": "sore",
+      "patterns": [
+        "selamat sore",
+        "sore",
+        "hai selamat sore",
+        "halo selamat sore",
+        "hai asisten selamat sore",
+        "halo asisten selamat sore",
+        "sore asisten",
+        "met sore"
+      ],
+      "responses": [
+        "Halo selamat sore katakan apa yang dapat saya bantu",
+        "halo selamat sore apa yang saya dapat lakukan untuk membantu anda"
+      ]
+    },
+    {
+      "tag": "malam",
+      "patterns": [
+        "selamat malam",
+        "malam",
+        "hai selamat malam",
+        "halo selamat malam",
+        "hai asisten selamat malam",
+        "halo asisten selamat malam",
+        "malam asisten",
+        "met malam",
+        "good night"
+      ],
+      "responses": [
+        "Halo selamat malam katakan apa yang dapat saya bantu",
+        "halo selamat malam apa yang saya dapat lakukan untuk membantu anda"
+      ]
+    },
+    {
+      "tag": "ac_hidup",
+      "patterns": [
+        "nyalakan ac",
+        "nyalain ac",
+        "hidupkan ac",
+        "hidupin ac",
+        "aktifkan ac",
+        "tolong nyalakan ac",
+        "tolong hidupkan ac",
+        "tolong aktifkan ac",
+        "ac hidup",
+        "ac nyala",
+        "ac aktif",
+        "ac on",
+        "nyalakan air conditioner",
+        "hidupkan air conditioner",
+        "nyalakan pendingin ruangan",
+        "hidupkan pendingin ruangan",
+        "aktifkan pendingin ruangan",
+        "tolong nyalakan pendingin ruangan",
+        "nyalakan ac sekarang",
+        "hidupkan ac sekarang",
+        "tolong nyalakan ase",
+        "hidupkan ase",
+        "ac dinyalakan",
+        "mau nyalakan ac",
+        "pengen nyalain ac",
+        "ingin nyalakan ac",
+        "boleh nyalakan ac",
+        "coba nyalakan ac",
+        "ruangan panas nyalakan ac",
+        "tolong hidupkan pendingin"
+      ],
+      "responses": [
+        "baik ac segera dihidupkan",
+        "baik ac segera dinyalakan",
+        "baik ac segera diaktifkan",
+        "siap ac sedang dinyalakan"
+      ]
+    },
+    {
+      "tag": "ac_mati",
+      "patterns": [
+        "matikan ac",
+        "matiin ac",
+        "nonaktifkan ac",
+        "tolong matikan ac",
+        "tolong matiin ac",
+        "ac mati",
+        "ac nonaktif",
+        "ac padam",
+        "ac off",
+        "matikan air conditioner",
+        "matiin air conditioner",
+        "matikan pendingin ruangan",
+        "nonaktifkan pendingin ruangan",
+        "tolong matikan pendingin ruangan",
+        "matikan ac sekarang",
+        "matiin ase",
+        "matikan ase",
+        "mau matikan ac",
+        "ingin matikan ac",
+        "sudah tidak perlu ac",
+        "ac sudah tidak diperlukan"
+      ],
+      "responses": [
+        "baik ac segera dimatikan",
+        "baik ac dimatikan",
+        "siap ac sedang dimatikan"
+      ]
+    },
+    {
+      "tag": "ac_naik",
+      "patterns": [
+        "naikkan suhu ac",
+        "naikan suhu ac",
+        "naikin suhu ac",
+        "tingkatkan suhu ac",
+        "besarkan suhu ac",
+        "tolong naikkan suhu ac",
+        "tolong naikan suhu ac",
+        "suhu ac naik",
+        "ac naik",
+        "suhu naik",
+        "naikkan suhu air conditioner",
+        "besarkan suhu air conditioner",
+        "naikkan suhu pendingin",
+        "tambah suhu ac",
+        "ac terlalu dingin naikkan suhu",
+        "kedinginan naikkan ac",
+        "suhu ac dinaikkan",
+        "panas kurangi ac naikkan suhu"
+      ],
+      "responses": [
+        "baik suhu ac segera dinaikan",
+        "baik suhu ac dinaikan",
+        "siap suhu ac sedang ditingkatkan"
+      ]
+    },
+    {
+      "tag": "ac_turun",
+      "patterns": [
+        "turunkan suhu ac",
+        "turunin suhu ac",
+        "kecilkan suhu ac",
+        "tolong turunkan suhu ac",
+        "tolong kecilkan suhu ac",
+        "suhu ac turun",
+        "ac turun",
+        "suhu turun",
+        "turunkan suhu air conditioner",
+        "kecilkan suhu air conditioner",
+        "turunkan suhu pendingin",
+        "kurangi suhu ac",
+        "ac terlalu panas turunkan suhu",
+        "gerah turunkan suhu ac",
+        "dinginkan lebih ac",
+        "perlu lebih dingin turunkan ac"
+      ],
+      "responses": [
+        "baik suhu ac segera diturunkan",
+        "baik suhu ac diturunkan",
+        "siap suhu ac sedang dikurangi"
+      ]
+    },
+    {
+      "tag": "kipas_hidup",
+      "patterns": [
+        "nyalakan kipas",
+        "hidupkan kipas",
+        "aktifkan kipas",
+        "nyalain kipas",
+        "hidupin kipas",
+        "aktifin kipas",
+        "tolong nyalakan kipas",
+        "tolong hidupkan kipas",
+        "kipas hidup",
+        "kipas nyala",
+        "kipas aktif",
+        "kipas on",
+        "nyalakan kipas angin",
+        "hidupkan kipas angin",
+        "nyalakan kipas sekarang",
+        "hidupkan kipas sekarang",
+        "mau nyalakan kipas",
+        "ingin nyalakan kipas",
+        "pengen hidupin kipas",
+        "coba nyalakan kipas",
+        "tolong nyalakan angin",
+        "butuh angin nyalakan kipas",
+        "panas nyalakan kipas"
+      ],
+      "responses": [
+        "baik kipas segera dihidupkan",
+        "baik kipas segera dinyalakan",
+        "siap kipas sedang dinyalakan"
+      ]
+    },
+    {
+      "tag": "kipas_mati",
+      "patterns": [
+        "matikan kipas",
+        "matiin kipas",
+        "nonaktifkan kipas",
+        "tolong matikan kipas",
+        "stop kipas",
+        "kipas mati",
+        "kipas nonaktif",
+        "kipas off",
+        "matikan kipas angin",
+        "hentikan kipas",
+        "matikan kipas sekarang",
+        "mau matikan kipas",
+        "ingin matikan kipas",
+        "sudah tidak perlu kipas",
+        "kipas sudah cukup matikan"
+      ],
+      "responses": [
+        "baik kipas segera dimatikan",
+        "baik kipas dimatikan",
+        "siap kipas sedang dimatikan"
+      ]
+    },
+    {
+      "tag": "kipas_naik",
+      "patterns": [
+        "naikkan kecepatan kipas",
+        "percepat kipas",
+        "cepatin kipas",
+        "tingkatkan kecepatan kipas",
+        "besarkan kecepatan kipas",
+        "tolong naikkan kecepatan kipas",
+        "kipas naik",
+        "kipas cepat",
+        "kipas lebih kencang",
+        "naikkan putaran kipas",
+        "percepat putaran kipas",
+        "kencangkan kipas",
+        "anginnya kurang kencangkan kipas",
+        "panas kencangkan kipas",
+        "tambah kecepatan kipas"
+      ],
+      "responses": [
+        "baik kecepatan kipas segera dinaikkan",
+        "baik kecepatan kipas dinaikkan",
+        "siap kecepatan kipas sedang ditingkatkan"
+      ]
+    },
+    {
+      "tag": "kipas_turun",
+      "patterns": [
+        "turunkan kecepatan kipas",
+        "perlambat kipas",
+        "pelankan kipas",
+        "kecilkan kecepatan kipas",
+        "kurangi kecepatan kipas",
+        "tolong turunkan kecepatan kipas",
+        "kipas turun",
+        "kipas pelan",
+        "kipas lebih pelan",
+        "turunkan putaran kipas",
+        "perlambat putaran kipas",
+        "anginnya terlalu kencang pelankan",
+        "kurangi angin kipas"
+      ],
+      "responses": [
+        "baik kecepatan kipas segera diturunkan",
+        "baik kecepatan kipas diturunkan",
+        "siap kecepatan kipas sedang dikurangi"
+      ]
+    },
+    {
+      "tag": "lampu1_hidup",
+      "patterns": [
+        "nyalakan lampu utama",
+        "hidupkan lampu utama",
+        "aktifkan lampu utama",
+        "nyalain lampu utama",
+        "hidupin lampu utama",
+        "tolong nyalakan lampu utama",
+        "tolong hidupkan lampu utama",
+        "lampu utama nyala",
+        "lampu utama hidup",
+        "lampu utama on",
+        "nyalakan lampu",
+        "hidupkan lampu",
+        "nyalain lampu",
+        "tolong nyalakan lampu",
+        "tolong hidupkan lampu",
+        "lampu ruang tengah nyala",
+        "nyalakan lampu ruang tengah",
+        "hidupkan lampu 1",
+        "nyalakan lampu 1",
+        "lampu 1 hidup",
+        "hidupkan lampu satu",
+        "nyalakan lampu satu",
+        "nyalakan lampu sekarang",
+        "hidupkan lampu sekarang",
+        "mau nyalakan lampu utama",
+        "ingin nyalakan lampu utama",
+        "tolong nyalain lampu",
+        "gelap nyalakan lampu utama"
+      ],
+      "responses": [
+        "baik lampu utama segera dihidupkan",
+        "baik lampu utama segera dinyalakan",
+        "siap lampu utama sedang dinyalakan"
+      ]
+    },
+    {
+      "tag": "lampu1_mati",
+      "patterns": [
+        "matikan lampu utama",
+        "padamkan lampu utama",
+        "nonaktifkan lampu utama",
+        "matiin lampu utama",
+        "padamin lampu utama",
+        "tolong matikan lampu utama",
+        "tolong padamkan lampu utama",
+        "lampu utama mati",
+        "lampu utama padam",
+        "lampu utama off",
+        "matikan lampu",
+        "padamkan lampu",
+        "matiin lampu",
+        "tolong matikan lampu",
+        "lampu ruang tengah mati",
+        "matikan lampu ruang tengah",
+        "matikan lampu 1",
+        "lampu 1 mati",
+        "matikan lampu satu",
+        "matikan lampu sekarang",
+        "padamkan lampu sekarang",
+        "mau matikan lampu utama",
+        "ingin matikan lampu utama"
+      ],
+      "responses": [
+        "baik lampu utama segera dimatikan",
+        "baik lampu utama dimatikan",
+        "siap lampu utama sedang dimatikan"
+      ]
+    },
+    {
+      "tag": "lampu2_hidup",
+      "patterns": [
+        "nyalakan lampu kamar",
+        "hidupkan lampu kamar",
+        "aktifkan lampu kamar",
+        "nyalain lampu kamar",
+        "hidupin lampu kamar",
+        "tolong nyalakan lampu kamar",
+        "tolong hidupkan lampu kamar",
+        "lampu kamar nyala",
+        "lampu kamar hidup",
+        "lampu kamar on",
+        "hidupkan lampu 2",
+        "nyalakan lampu 2",
+        "lampu 2 hidup",
+        "hidupkan lampu dua",
+        "nyalakan lampu dua",
+        "nyalakan lampu kamar sekarang",
+        "lampu kamar gelap nyalakan",
+        "mau nyalakan lampu kamar",
+        "ingin nyalakan lampu kamar"
+      ],
+      "responses": [
+        "baik lampu kamar segera dihidupkan",
+        "baik lampu kamar segera dinyalakan",
+        "siap lampu kamar sedang dinyalakan"
+      ]
+    },
+    {
+      "tag": "lampu2_mati",
+      "patterns": [
+        "matikan lampu kamar",
+        "padamkan lampu kamar",
+        "nonaktifkan lampu kamar",
+        "matiin lampu kamar",
+        "padamin lampu kamar",
+        "tolong matikan lampu kamar",
+        "lampu kamar mati",
+        "lampu kamar padam",
+        "lampu kamar off",
+        "matikan lampu 2",
+        "lampu 2 mati",
+        "matikan lampu dua",
+        "matikan lampu kamar sekarang",
+        "mau matikan lampu kamar",
+        "ingin matikan lampu kamar",
+        "sudah tidur matikan lampu kamar"
+      ],
+      "responses": [
+        "baik lampu kamar segera dimatikan",
+        "baik lampu kamar dimatikan",
+        "siap lampu kamar sedang dimatikan"
+      ]
+    },
+    {
+      "tag": "lampu3_hidup",
+      "patterns": [
+        "nyalakan lampu tamu",
+        "hidupkan lampu tamu",
+        "aktifkan lampu tamu",
+        "nyalain lampu tamu",
+        "hidupin lampu tamu",
+        "tolong nyalakan lampu tamu",
+        "tolong hidupkan lampu tamu",
+        "lampu tamu nyala",
+        "lampu tamu hidup",
+        "lampu tamu on",
+        "nyalakan lampu ruang tamu",
+        "hidupkan lampu ruang tamu",
+        "hidupkan lampu 3",
+        "nyalakan lampu 3",
+        "lampu 3 hidup",
+        "hidupkan lampu tiga",
+        "nyalakan lampu tiga",
+        "nyalakan lampu tamu sekarang",
+        "ada tamu nyalakan lampu tamu",
+        "mau nyalakan lampu tamu",
+        "ingin nyalakan lampu tamu"
+      ],
+      "responses": [
+        "baik lampu ruang tamu segera dihidupkan",
+        "baik lampu ruang tamu segera dinyalakan",
+        "siap lampu ruang tamu sedang dinyalakan"
+      ]
+    },
+    {
+      "tag": "lampu3_mati",
+      "patterns": [
+        "matikan lampu tamu",
+        "padamkan lampu tamu",
+        "nonaktifkan lampu tamu",
+        "matiin lampu tamu",
+        "padamin lampu tamu",
+        "tolong matikan lampu tamu",
+        "lampu tamu mati",
+        "lampu ruang tamu mati",
+        "matikan lampu ruang tamu",
+        "lampu tamu padam",
+        "lampu tamu off",
+        "matikan lampu 3",
+        "lampu 3 mati",
+        "matikan lampu tiga",
+        "matikan lampu tamu sekarang",
+        "mau matikan lampu tamu",
+        "ingin matikan lampu tamu"
+      ],
+      "responses": [
+        "baik lampu ruang tamu segera dimatikan",
+        "baik lampu ruang tamu dimatikan",
+        "siap lampu ruang tamu sedang dimatikan"
+      ]
+    },
+    {
+      "tag": "lampusemua_hidup",
+      "patterns": [
+        "nyalakan semua lampu",
+        "hidupkan semua lampu",
+        "aktifkan semua lampu",
+        "nyalain semua lampu",
+        "hidupin semua lampu",
+        "tolong nyalakan semua lampu",
+        "semua lampu hidup",
+        "semua lampu nyala",
+        "nyalakan seluruh lampu",
+        "hidupkan seluruh lampu",
+        "semua lampu on",
+        "nyalakan semua lampu di rumah",
+        "terangi semua ruangan",
+        "mau nyalakan semua lampu",
+        "ingin nyalakan semua lampu"
+      ],
+      "responses": [
+        "baik semua lampu yang ada dalam rumah akan segera dihidupkan",
+        "baik semua lampu akan segera dinyalakan",
+        "siap semua lampu sedang dinyalakan"
+      ]
+    },
+    {
+      "tag": "lampusemua_mati",
+      "patterns": [
+        "matikan semua lampu",
+        "padamkan semua lampu",
+        "nonaktifkan semua lampu",
+        "matiin semua lampu",
+        "padamin semua lampu",
+        "tolong matikan semua lampu",
+        "semua lampu mati",
+        "semua lampu padam",
+        "matikan seluruh lampu",
+        "padamkan seluruh lampu",
+        "semua lampu off",
+        "matikan semua lampu di rumah",
+        "padamkan semua penerangan",
+        "mau matikan semua lampu",
+        "ingin matikan semua lampu"
+      ],
+      "responses": [
+        "baik semua lampu yang ada dalam rumah akan segera dimatikan",
+        "baik semua lampu akan segera dimatikan",
+        "siap semua lampu sedang dimatikan"
+      ]
+    },
+    {
+      "tag": "pompa_hidup",
+      "patterns": [
+        "nyalakan pompa",
+        "hidupkan pompa",
+        "aktifkan pompa",
+        "tolong nyalakan pompa",
+        "tolong hidupkan pompa",
+        "nyalakan pompa penyiram",
+        "hidupkan pompa penyiram",
+        "siram tanaman",
+        "tolong siram tanaman",
+        "siram tanamannya",
+        "tanaman kering",
+        "tanaman butuh air",
+        "tanaman butuh minum",
+        "beri air tanaman",
+        "beri minum tanaman",
+        "nyalakan penyiram tanaman",
+        "hidupkan penyiram",
+        "pompa hidup",
+        "pompa nyala",
+        "pompa on",
+        "mau siram tanaman",
+        "ingin siram tanaman",
+        "sepertinya tanaman butuh disiram"
+      ],
+      "responses": [
+        "baik pompa penyiram segera dihidupkan",
+        "baik pompa penyiram segera dinyalakan",
+        "siap pompa penyiram tanaman sedang dinyalakan"
+      ]
+    },
+    {
+      "tag": "pompa_mati",
+      "patterns": [
+        "matikan pompa",
+        "hentikan pompa",
+        "nonaktifkan pompa",
+        "tolong matikan pompa",
+        "stop pompa",
+        "matikan pompa penyiram",
+        "hentikan penyiraman",
+        "penyiraman sudah cukup",
+        "sudah cukup siram",
+        "stop siram tanaman",
+        "matikan penyiram",
+        "pompa mati",
+        "pompa off",
+        "mau matikan pompa",
+        "ingin matikan pompa"
+      ],
+      "responses": [
+        "baik pompa penyiram segera dimatikan",
+        "baik pompa penyiram dimatikan",
+        "siap pompa penyiram sedang dimatikan"
+      ]
+    },
+    {
+      "tag": "tirai_hidup",
+      "patterns": [
+        "tutup tirai",
+        "tolong tutup tirai",
+        "tutup tirai sekarang",
+        "tutup tirai jendela",
+        "tutup jendela",
+        "tutup kaca",
+        "tirai tutup",
+        "tirai ditutup",
+        "mau tutup tirai",
+        "ingin tutup tirai",
+        "tolong tutupkan tirai",
+        "silakan tutup tirai",
+        "gelap tutup tirai",
+        "malam tutup tirai"
+      ],
+      "responses": [
+        "baik tirai jendela segera ditutup",
+        "baik tirai jendela ditutup",
+        "siap tirai sedang ditutup"
+      ]
+    },
+    {
+      "tag": "tirai_mati",
+      "patterns": [
+        "buka tirai",
+        "tolong buka tirai",
+        "buka tirai sekarang",
+        "buka tirai jendela",
+        "buka jendela",
+        "buka kaca",
+        "tirai buka",
+        "tirai dibuka",
+        "mau buka tirai",
+        "ingin buka tirai",
+        "tolong bukakan tirai",
+        "silakan buka tirai",
+        "pagi buka tirai",
+        "biarkan sinar masuk buka tirai"
+      ],
+      "responses": [
+        "baik tirai jendela segera dibuka",
+        "baik tirai jendela dibuka",
+        "siap tirai sedang dibuka"
+      ]
+    },
+    {
+      "tag": "kran_hidup",
+      "patterns": [
+        "buka saluran air",
+        "nyalakan saluran air",
+        "hidupkan saluran air",
+        "tolong buka saluran air",
+        "aktifkan saluran air",
+        "saluran air hidup",
+        "saluran air buka",
+        "saluran air on",
+        "nyalakan kran",
+        "buka kran",
+        "hidupkan kran air",
+        "nyalain air",
+        "hidupin air",
+        "buka air",
+        "mau buka saluran air",
+        "ingin buka kran",
+        "tolong alirkan air",
+        "alirkan air sekarang"
+      ],
+      "responses": [
+        "baik saluran air segera dibuka",
+        "baik saluran air dibuka",
+        "siap saluran air sedang dibuka"
+      ]
+    },
+    {
+      "tag": "kran_mati",
+      "patterns": [
+        "tutup saluran air",
+        "matikan saluran air",
+        "nonaktifkan saluran air",
+        "tolong tutup saluran air",
+        "tolong matikan saluran air",
+        "saluran air mati",
+        "saluran air tutup",
+        "saluran air off",
+        "matikan kran",
+        "tutup kran",
+        "stop air",
+        "matiin air",
+        "matikan air sekarang",
+        "mau tutup saluran air",
+        "ingin matikan kran",
+        "sudah cukup tutup saluran air"
+      ],
+      "responses": [
+        "baik saluran air segera ditutup",
+        "baik saluran air ditutup",
+        "siap saluran air sedang ditutup"
+      ]
+    },
+    {
+      "tag": "kunci_hidup",
+      "patterns": [
+        "tutup pintu",
+        "kunci pintu",
+        "tolong kunci pintu",
+        "tolong tutup pintu",
+        "pintu kunci",
+        "pintu tutup",
+        "aktifkan kunci pintu",
+        "kunci pintu sekarang",
+        "mau kunci pintu",
+        "ingin kunci pintu",
+        "pastikan pintu terkunci",
+        "tolong pastikan pintu tertutup"
+      ],
+      "responses": [
+        "baik kunci pintu segera dikunci",
+        "baik pintu dikunci",
+        "siap pintu sedang dikunci"
+      ]
+    },
+    {
+      "tag": "kunci_mati",
+      "patterns": [
+        "buka pintu",
+        "buka kunci pintu",
+        "tolong buka pintu",
+        "tolong buka kunci pintu",
+        "kunci buka",
+        "pintu buka",
+        "nonaktifkan kunci pintu",
+        "buka kunci sekarang",
+        "mau buka pintu",
+        "ingin buka pintu",
+        "ada tamu buka pintu",
+        "tolong bukakan pintu",
+        "unlock pintu",
+        "buka dong pintunya"
+      ],
+      "responses": [
+        "baik kunci pintu segera dibuka",
+        "baik kunci pintu dibuka",
+        "siap pintu sedang dibuka selama 5 detik"
+      ]
+    },
+    {
+      "tag": "terminal_hidup",
+      "patterns": [
+        "nyalakan terminal",
+        "hidupkan terminal",
+        "aktifkan terminal",
+        "nyalakan colokan",
+        "hidupkan colokan",
+        "aktifkan colokan",
+        "nyalakan terminal listrik",
+        "hidupkan terminal listrik",
+        "nyalakan colokan listrik",
+        "hidupkan colokan listrik",
+        "terminal hidup",
+        "terminal nyala",
+        "terminal on",
+        "colokan hidup",
+        "colokan nyala",
+        "mau nyalakan terminal",
+        "ingin hidupkan colokan",
+        "tolong nyalakan terminal listrik"
+      ],
+      "responses": [
+        "baik terminal colokan listrik akan segera dihidupkan",
+        "baik terminal listrik akan segera dinyalakan",
+        "siap terminal listrik sedang dinyalakan"
+      ]
+    },
+    {
+      "tag": "terminal_mati",
+      "patterns": [
+        "matikan terminal",
+        "nonaktifkan terminal",
+        "padamkan terminal",
+        "matikan colokan",
+        "nonaktifkan colokan",
+        "matikan terminal listrik",
+        "nonaktifkan terminal listrik",
+        "matikan colokan listrik",
+        "padamkan colokan listrik",
+        "terminal mati",
+        "terminal nonaktif",
+        "terminal off",
+        "colokan mati",
+        "colokan off",
+        "mau matikan terminal",
+        "ingin matikan colokan",
+        "tolong matikan terminal listrik"
+      ],
+      "responses": [
+        "baik terminal colokan listrik akan segera dimatikan",
+        "baik terminal listrik akan segera dinonaktifkan",
+        "siap terminal listrik sedang dimatikan"
+      ]
+    },
+    {
+      "tag": "gelap",
+      "patterns": [
+        "gelap",
+        "ruangan gelap",
+        "saya tidak bisa melihat",
+        "sepertinya ruangan gelap",
+        "butuh pencahayaan",
+        "saya memerlukan pencahayaan",
+        "saya butuh penerangan",
+        "tolong saya butuh penerangan",
+        "saya tidak dapat melihat apapun",
+        "gelap sekali",
+        "terangi ruangan"
+      ],
+      "responses": [
+        "baik saya akan membantu memberi pencahayaan lampu mana yang ingin anda nyalakan",
+        "baik lampu mana yang ingin anda hidupkan untuk memberikan pencahayaan"
+      ]
+    },
+    {
+      "tag": "terang",
+      "patterns": [
+        "terang",
+        "terlalu terang",
+        "ruangan terlalu terang",
+        "saya merasa silau",
+        "silau sekali",
+        "butuh ruangan yang redup",
+        "kurangi pencahayaan",
+        "matikan pencahayaan",
+        "sepertinya ruangan terlalu terang"
+      ],
+      "responses": [
+        "baik saya akan membantu mengurangi pencahayaan lampu mana yang ingin anda matikan",
+        "baik lampu mana yang ingin anda matikan untuk mengurangi pencahayaan"
+      ]
+    },
+    {
+      "tag": "panas",
+      "patterns": [
+        "panas",
+        "gerah",
+        "saya merasa panas",
+        "saya merasa gerah",
+        "ruangan panas",
+        "sepertinya ruangan panas",
+        "saya butuh udara dingin",
+        "saya butuh udara sejuk",
+        "panas sekali",
+        "gerah sekali",
+        "sesak",
+        "udara panas tolong",
+        "tolong ruangannya panas"
+      ],
+      "responses": [
+        "baik saya akan membantu memberi pendinginan ruangan anda ingin menghidupkan ac atau kipas",
+        "baik anda ingin menghidupkan kipas atau ac untuk memberikan pendinginan ruangan"
+      ]
+    },
+    {
+      "tag": "pergi",
+      "patterns": [
+        "pergi",
+        "saya akan pergi",
+        "saya mau pergi",
+        "saya ingin keluar",
+        "saya akan keluar",
+        "saya akan meninggalkan rumah",
+        "saya ingin meninggalkan rumah",
+        "nyalakan mode pergi",
+        "aktifkan mode pergi",
+        "saya mau keluar rumah",
+        "saya mau pergi keluar",
+        "tolong mode pergi",
+        "aku mau pergi sekarang",
+        "mau pergi matikan semua",
+        "keluar rumah matikan semua"
+      ],
+      "responses": [
+        "baik saya akan menjaga rumah tetap aman dan hemat energi dengan mematikan terminal listrik pompa kipas seluruh lampu dan saluran air yang ada di rumah"
+      ]
+    },
+    {
+      "tag": "thanks",
+      "patterns": [
+        "terima kasih",
+        "terimakasih",
+        "makasih",
+        "thanks",
+        "terima kasih banyak",
+        "terimakasih banyak",
+        "terima kasih asisten",
+        "terima kasih atas bantuannya",
+        "terimakasih telah membantu",
+        "terima kasih sudah membantu",
+        "oke terima kasih",
+        "oke makasih",
+        "thanks ya",
+        "makasih ya asisten",
+        "terima kasih asisten"
+      ],
+      "responses": [
+        "sama sama senang bisa membantu anda",
+        "tidak masalah ini sudah menjadi tugas saya",
+        "sama sama kapan pun anda butuhkan saya selalu siap"
+      ]
+    },
+    {
+      "tag": "bosan",
+      "patterns": [
+        "bosan",
+        "saya bosan",
+        "saya merasa bosan",
+        "jenuh",
+        "saya jenuh",
+        "saya merasa jenuh",
+        "capek",
+        "lelah",
+        "saya capek",
+        "saya lelah",
+        "suntuk",
+        "tidak ada yang dilakukan",
+        "bantu saya mengatasi bosan",
+        "hiburan dong"
+      ],
+      "responses": [
+        "saya akan membantu anda untuk mengatasi bosan apakah anda mau mendengarkan musik",
+        "apakah anda mau mendengarkan musik untuk menghilangkan kebosanan",
+        "katakan apa yang dapat saya bantu untuk mengatasi rasa bosan"
+      ]
+    },
+    {
+      "tag": "musik",
+      "patterns": [
+        "putar musik",
+        "mainkan musik",
+        "putar lagu",
+        "ya putarkan musik",
+        "ya mainkan musik",
+        "ya putar lagu",
+        "tolong putarkan musik",
+        "tolong mainkan musik",
+        "aktifkan musik",
+        "nyalakan musik",
+        "putar lagu favorit saya",
+        "putar lagu favorit",
+        "mau dengar musik",
+        "ingin dengar musik",
+        "musik dong",
+        "lagu dong"
+      ],
+      "responses": [
+        "baik musik favorit anda akan segera diputar",
+        "baik lagu favorit anda akan segera diputar",
+        "saya akan segera memputarkan musik untuk anda"
+      ]
+    },
+    {
+      "tag": "otolampu_hidup",
+      "patterns": [
+        "nyalakan sistem otomatis lampu",
+        "aktifkan sistem otomatis lampu",
+        "hidupkan sistem otomatis lampu",
+        "aktifkan otomatis lampu",
+        "nyalakan sensor ldr",
+        "aktifkan sensor ldr",
+        "hidupkan sensor ldr",
+        "otomatis lampu hidup",
+        "otomatis lampu nyala",
+        "otomatis lampu aktif",
+        "tolong aktifkan sistem otomatis lampu",
+        "nyalakan sistem otomatis pencahayaan",
+        "aktifkan sensor cahaya",
+        "nyalakan sensor cahaya",
+        "mau aktifkan otomatis lampu",
+        "ingin nyalakan sistem otomatis lampu"
+      ],
+      "responses": [
+        "baik sistem untuk lampu otomatis akan segera diaktifkan",
+        "baik sistem otomatis untuk pencahayaan ruangan akan segera diaktifkan",
+        "siap sensor ldr untuk sistem lampu otomatis sedang diaktifkan"
+      ]
+    },
+    {
+      "tag": "otolampu_mati",
+      "patterns": [
+        "matikan sistem otomatis lampu",
+        "nonaktifkan sistem otomatis lampu",
+        "matikan sensor ldr",
+        "nonaktifkan sensor ldr",
+        "otomatis lampu mati",
+        "otomatis lampu nonaktif",
+        "tolong matikan sistem otomatis lampu",
+        "matikan sistem otomatis pencahayaan",
+        "nonaktifkan sensor cahaya",
+        "matikan sensor cahaya",
+        "mau matikan otomatis lampu",
+        "ingin nonaktifkan sistem otomatis lampu"
+      ],
+      "responses": [
+        "baik sistem untuk lampu otomatis akan segera dimatikan",
+        "baik sistem otomatis untuk pencahayaan ruangan akan segera dimatikan",
+        "siap sensor ldr untuk sistem lampu otomatis sedang dinonaktifkan"
+      ]
+    },
+    {
+      "tag": "otopompa_hidup",
+      "patterns": [
+        "nyalakan sistem otomatis pompa",
+        "aktifkan sistem otomatis pompa",
+        "hidupkan sistem otomatis pompa",
+        "nyalakan sistem otomatis penyiram",
+        "aktifkan sistem otomatis penyiram",
+        "nyalakan sensor tanah",
+        "aktifkan sensor tanah",
+        "hidupkan sensor tanah",
+        "otomatis pompa hidup",
+        "otomatis pompa nyala",
+        "otomatis pompa aktif",
+        "tolong aktifkan sistem otomatis pompa",
+        "aktifkan otomatis siram tanaman",
+        "mau aktifkan otomatis pompa",
+        "ingin nyalakan sistem otomatis pompa"
+      ],
+      "responses": [
+        "baik sistem pompa otomatis untuk penyiram tanaman akan segera diaktifkan",
+        "baik sistem otomatis untuk penyiraman akan segera diaktifkan",
+        "siap sensor tanah untuk sistem penyiraman otomatis sedang diaktifkan"
+      ]
+    },
+    {
+      "tag": "otopompa_mati",
+      "patterns": [
+        "matikan sistem otomatis pompa",
+        "nonaktifkan sistem otomatis pompa",
+        "matikan sensor tanah",
+        "nonaktifkan sensor tanah",
+        "otomatis pompa mati",
+        "otomatis pompa nonaktif",
+        "tolong matikan sistem otomatis pompa",
+        "matikan otomatis siram tanaman",
+        "nonaktifkan penyiram otomatis",
+        "mau matikan otomatis pompa",
+        "ingin nonaktifkan sistem otomatis pompa"
+      ],
+      "responses": [
+        "baik sistem pompa otomatis untuk penyiram tanaman akan segera dimatikan",
+        "baik sistem otomatis untuk penyiraman tanaman akan segera dimatikan",
+        "siap sensor tanah untuk sistem penyiraman otomatis sedang dinonaktifkan"
+      ]
+    },
+    {
+      "tag": "suhu",
+      "patterns": [
+        "berapa suhu sekarang",
+        "suhu ruangan sekarang",
+        "suhu saat ini",
+        "berapa derajat sekarang",
+        "berapa derajat suhu saat ini",
+        "beri tahu saya suhu ruangan",
+        "cek suhu ruangan",
+        "suhu berapa sekarang",
+        "berapakah suhu ruangan saat ini",
+        "halo asisten berapa suhu sekarang",
+        "mau tahu suhu ruangan",
+        "suhu ruangan saat ini berapa",
+        "seberapa panas ruangan ini"
+      ],
+      "responses": [
+        "halo suhu ruangan saat ini adalah",
+        "baik suhu ruangan saat ini adalah"
+      ]
+    },
+    {
+      "tag": "jam",
+      "patterns": [
+        "jam berapa sekarang",
+        "pukul berapa sekarang",
+        "jam berapa saat ini",
+        "pukul berapa saat ini",
+        "sekarang jam berapa",
+        "sekarang pukul berapa",
+        "jam",
+        "waktu sekarang",
+        "cek waktu",
+        "beri tahu saya jam sekarang",
+        "mau tahu jam sekarang",
+        "halo asisten jam berapa",
+        "halo asisten pukul berapa sekarang"
+      ],
+      "responses": [
+        "halo waktu saat ini adalah menunjukkan pukul",
+        "baik waktu saat ini adalah menunjukkan pukul",
+        "waktu saat ini adalah pukul"
+      ]
+    },
+    {
+      "tag": "tanggal",
+      "patterns": [
+        "tanggal berapa sekarang",
+        "sekarang tanggal berapa",
+        "tanggal apa sekarang",
+        "tanggal apa hari ini",
+        "hari ini tanggal berapa",
+        "tanggal",
+        "beri tahu saya tanggal sekarang",
+        "cek tanggal",
+        "mau tahu tanggal sekarang",
+        "halo asisten tanggal berapa sekarang",
+        "informasi tanggal"
+      ],
+      "responses": [
+        "halo tanggal saat ini adalah",
+        "baik tanggal saat ini adalah",
+        "tanggal saat ini adalah"
+      ]
+    },
+    {
+      "tag": "hari",
+      "patterns": [
+        "hari apa sekarang",
+        "sekarang hari apa",
+        "hari apa saat ini",
+        "hari apa hari ini",
+        "hari ini hari apa",
+        "hari",
+        "beri tahu saya hari ini",
+        "cek hari",
+        "mau tahu hari sekarang",
+        "halo asisten hari apa sekarang",
+        "informasi hari",
+        "sekarang hari apa ya"
+      ],
+      "responses": [
+        "halo hari ini adalah hari",
+        "baik hari ini adalah hari",
+        "sekarang adalah hari"
+      ]
+    },
+    {
+      "tag": "info",
+      "patterns": [
+        "siapa kamu",
+        "siapakah kamu",
+        "siapa anda",
+        "siapa dirimu",
+        "apa itu kamu",
+        "kamu siapa",
+        "untuk apa kamu dibuat",
+        "untuk apa kamu diciptakan",
+        "siapa yang membuat kamu",
+        "siapa yang menciptakan kamu",
+        "apa tujuan kamu",
+        "ceritakan tentang dirimu",
+        "beritahu saya tentang dirimu",
+        "informasi tentang kamu",
+        "kamu bisa apa saja",
+        "apa kemampuan kamu",
+        "halo asisten siapa kamu"
+      ],
+      "responses": [
+        "halo saya adalah asisten interaktif yang siap membantu dan mendengarkan perintah mu untuk mengontrol perangkat yang ada di rumah dan diciptakan sebagai prototype untuk tugas akhir oleh mahasiswa Teknik Elektro Unpad"
+      ]
+    }
+  ]
+}
