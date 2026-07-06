@@ -190,126 +190,70 @@
         let isConnected = false;
         let waterStatus = false;
 
-        const device = {
-            id: 'water',
-            name: 'Solenoid Valve',
-            index: 8,
-            onCommand: 'ON 8',
-            offCommand: 'OFF 8'
-        };
+        // PERBAIKAN: Tambah mqttName
+        const device = { id: 'water', name: 'Solenoid Valve', index: 8, onCommand: 'ON 8', offCommand: 'OFF 8', mqttName: 'solenoid_valve' };
 
         function connectToMQTT() {
             updateMqttStatus('Connecting', 'connecting');
-
-            const options = {
-                clientId: 'smart_home_water_' + Math.random().toString(16).substr(2, 8),
-                clean: true,
-                reconnectPeriod: 1000,
-                connectTimeout: 30000
-            };
-
+            const options = { clientId: 'smart_home_water_' + Math.random().toString(16).substr(2, 8), clean: true, reconnectPeriod: 1000, connectTimeout: 30000 };
             mqttClient = mqtt.connect(MQTT_BROKER_URL, options);
 
             mqttClient.on('connect', () => {
                 isConnected = true;
                 updateMqttStatus('Connected', 'connected');
                 subscribeToTopics();
-                setTimeout(() => {
-                    sendCommand('STATUS');
-                    showNotification('Terhubung ke sistem Smart Home', 'success');
-                }, 1000);
+                
+                // PERBAIKAN: Minta Sinkronisasi
+                mqttClient.publish(MQTT_TOPIC_PREFIX + 'request', "REQ_ALL", { qos: 0 });
+
+                setTimeout(() => sendCommand('STATUS'), 1000);
             });
 
-            mqttClient.on('message', (topic, message) => {
-                handleMessage(topic, message.toString());
-            });
-
-            mqttClient.on('error', () => {
-                updateMqttStatus('Error', 'disconnected');
-                isConnected = false;
-                showNotification('Error koneksi MQTT', 'error');
-            });
-
-            mqttClient.on('close', () => {
-                updateMqttStatus('Disconnected', 'disconnected');
-                isConnected = false;
-            });
+            mqttClient.on('message', (topic, message) => handleMessage(topic, message.toString()));
+            mqttClient.on('error', () => { updateMqttStatus('Error', 'disconnected'); isConnected = false; });
+            mqttClient.on('close', () => { updateMqttStatus('Disconnected', 'disconnected'); isConnected = false; });
         }
 
         function subscribeToTopics() {
-            const topics = [
-                MQTT_TOPIC_PREFIX + 'response',
-                MQTT_TOPIC_PREFIX + 'status',
-                MQTT_TOPIC_PREFIX + 'sensor'
-            ];
-            topics.forEach(topic => {
-                mqttClient.subscribe(topic, { qos: 0 });
-            });
+            ['response', 'status', 'sensor'].forEach(t => mqttClient.subscribe(MQTT_TOPIC_PREFIX + t, { qos: 0 }));
         }
 
         function handleMessage(topic, message) {
-            if (message.includes("SISTEM KONTROL RUMAH") ||
-                message.includes("PERINTAH SERIAL:") ||
-                message.includes("Catatan:") ||
-                message.startsWith("ARDUINO_MEGA:") ||
-                message.startsWith("ESP32:") ||
-                message.includes("===============================")) {
-                return;
-            }
+            if (message.includes("SISTEM KONTROL RUMAH") || message.includes("PERINTAH SERIAL:")) return;
+            if (!message.includes(':')) return;
 
-            if (message.includes(':')) {
-                const parts = message.split(':');
-                if (parts.length >= 2) {
-                    const deviceName = parts[0].trim();
-                    const status = parts[1].trim().toUpperCase();
-                    const isOn = status.includes('ON') || status.includes('AKTIF') ||
-                                 status.includes('BUKA') || status.includes('TERBUKA');
+            const parts = message.split(':');
+            if (parts.length >= 2) {
+                const deviceName = parts[0].trim().toLowerCase();
+                const status = parts[1].trim().toUpperCase();
+                const isOn = status.includes('ON') || status.includes('AKTIF') || status.includes('BUKA') || status.includes('TERBUKA');
+                const isSync = status.includes('SYNC');
 
-                    if (deviceName.includes('Solenoid Valve') ||
-                        deviceName.includes('Valve') ||
-                        deviceName.includes('Saluran Air') ||
-                        deviceName.includes('solenoid_valve')) {
-
-                        updateDeviceUI(isOn);
-                        showNotification(`Solenoid Valve ${isOn ? 'dibuka' : 'ditutup'}`, 'success');
-                    }
+                if (deviceName.includes('valve') || deviceName.includes('saluran') || deviceName === device.mqttName) {
+                    updateDeviceUI(isOn);
+                    if (!isSync) showNotification(`Solenoid Valve ${isOn ? 'dibuka' : 'ditutup'}`, 'success');
                 }
             }
         }
 
         function updateMqttStatus(text, statusClass) {
             const element = document.getElementById('mqttStatus');
-            if (element) {
-                element.textContent = `MQTT: ${text}`;
-                element.className = 'mqtt-status ' + statusClass;
-            }
+            if (element) { element.textContent = `MQTT: ${text}`; element.className = 'mqtt-status ' + statusClass; }
         }
 
         function updateDeviceUI(isOn) {
             waterStatus = isOn;
-
             const checkbox = document.getElementById('water');
             if (checkbox) checkbox.checked = isOn;
-
             const statusElement = document.getElementById('waterStatus');
-            if (statusElement) {
-                statusElement.textContent = `Status: ${isOn ? 'TERBUKA' : 'TERTUTUP'}`;
-            }
-
+            if (statusElement) statusElement.textContent = `Status: ${isOn ? 'TERBUKA' : 'TERTUTUP'}`;
             const cardElement = document.getElementById('waterCard');
-            if (cardElement) {
-                cardElement.className = `water-card ${isOn ? 'on' : 'off'}`;
-            }
+            if (cardElement) cardElement.className = `water-card ${isOn ? 'on' : 'off'}`;
         }
 
         function sendCommand(command) {
-            if (!isConnected || !mqttClient) {
-                showNotification('Tidak terhubung ke server MQTT', 'error');
-                return false;
-            }
-            mqttClient.publish(MQTT_TOPIC_PREFIX + 'control', command, { qos: 0 }, (err) => {
-                if (err) showNotification('Gagal mengirim perintah', 'error');
-            });
+            if (!isConnected || !mqttClient) return false;
+            mqttClient.publish(MQTT_TOPIC_PREFIX + 'control', command, { qos: 0 });
             return true;
         }
 
@@ -323,8 +267,7 @@
             const notification = document.getElementById('notification');
             if (notification) {
                 notification.textContent = message;
-                notification.className = 'notification';
-                if (type === 'error') notification.classList.add('error');
+                notification.className = 'notification ' + (type === 'error' ? 'error' : '');
                 notification.style.display = 'block';
                 setTimeout(() => { notification.style.display = 'none'; }, 3000);
             }

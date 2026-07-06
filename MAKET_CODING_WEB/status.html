@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <title>Smart Home - Status Keseluruhan</title>
+    <style>
+        body {
+            font-family: Poppins, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .header {
+            background-color: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+        }
+        .logo { display: flex; align-items: center; }
+        .logo img { width: 40px; margin-right: 10px; }
+        .mqtt-status {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background-color: #ff9800;
+            color: white;
+            font-weight: bold;
+        }
+        .mqtt-status.connected { background-color: #4CAF50; }
+        .mqtt-status.disconnected { background-color: #f44336; }
+        .mqtt-status.connecting { background-color: #ff9800; }
+        
+        .container {
+            padding: 90px 20px 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .status-card {
+            background-color: #ffc107; /* Default warna Kuning/Mati */
+            border-radius: 10px;
+            padding: 15px 10px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        .status-card.on {
+            background-color: #4CAF50; /* Hijau saat nyala */
+            color: white;
+        }
+        .status-card.on p, .status-card.on .state {
+            color: white;
+        }
+        
+        .status-icon {
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        .status-icon img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+        }
+        
+        .status-info {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        .status-info p {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            line-height: 1.2;
+        }
+        .status-info .state {
+            margin: 4px 0 0 0;
+            font-size: 11px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        .back-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #ffc107;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            z-index: 100;
+        }
+        .back-button:hover { background-color: #e8b007; box-shadow: 0 6px 12px rgba(0,0,0,0.3); transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <img src="https://www.unpad.ac.id/wp-content/uploads/2018/04/logo-unpad1.png" alt="Logo">
+            <span>Dashboard Status</span>
+        </div>
+        <div id="mqttStatus" class="mqtt-status">MQTT: Connecting...</div>
+    </div>
+
+    <div class="container">
+        <div class="section-title">Pemantauan Seluruh Perangkat</div>
+        
+        <div class="status-grid">
+            <div class="status-card off" id="lampu_utamaCard">
+                <div class="status-icon"><img src="Asset/idea.png" alt="icon"></div>
+                <div class="status-info"><p>Lampu Utama</p><span class="state" id="lampu_utamaState">MATI</span></div>
+            </div>
+            <div class="status-card off" id="lampu_kamarCard">
+                <div class="status-icon"><img src="Asset/idea.png" alt="icon"></div>
+                <div class="status-info"><p>Lampu Kamar</p><span class="state" id="lampu_kamarState">MATI</span></div>
+            </div>
+            <div class="status-card off" id="lampu_tamuCard">
+                <div class="status-icon"><img src="Asset/idea.png" alt="icon"></div>
+                <div class="status-info"><p>Lampu Tamu</p><span class="state" id="lampu_tamuState">MATI</span></div>
+            </div>
+            
+            <div class="status-card off" id="colokan_terminalCard">
+                <div class="status-icon"><img src="Asset/automation.png" alt="icon"></div>
+                <div class="status-info"><p>Terminal Listrik</p><span class="state" id="colokan_terminalState">MATI</span></div>
+            </div>
+            <div class="status-card off" id="kipasCard">
+                <div class="status-icon"><img src="Asset/fan.png" alt="icon"></div>
+                <div class="status-info"><p>Kipas</p><span class="state" id="kipasState">MATI</span></div>
+            </div>
+            
+            <div class="status-card off" id="ac_powerCard">
+                <div class="status-icon"><img src="Asset/ac.png" alt="icon"></div>
+                <div class="status-info"><p>AC Ruangan</p><span class="state" id="ac_powerState">MATI</span></div>
+            </div>
+            
+            <div class="status-card off" id="solenoid_doorCard">
+                <div class="status-icon"><img src="Asset/door_lock.png" alt="icon"></div>
+                <div class="status-info"><p>Door Lock</p><span class="state" id="solenoid_doorState">TERKUNCI</span></div>
+            </div>
+            <div class="status-card on" id="tiraiCard"> <div class="status-icon"><img src="Asset/curtains.png" alt="icon"></div>
+                <div class="status-info"><p>Tirai</p><span class="state" id="tiraiState">TERBUKA</span></div>
+            </div>
+
+            <div class="status-card off" id="pompa_penyiramCard">
+                <div class="status-icon"><img src="Asset/plant.png" alt="icon"></div>
+                <div class="status-info"><p>Pompa Siram</p><span class="state" id="pompa_penyiramState">MATI</span></div>
+            </div>
+            <div class="status-card off" id="solenoid_valveCard">
+                <div class="status-icon"><img src="Asset/drop.png" alt="icon"></div>
+                <div class="status-info"><p>Saluran Air</p><span class="state" id="solenoid_valveState">TERTUTUP</span></div>
+            </div>
+            
+            <div class="status-card off" id="otomatis_lampuCard">
+                <div class="status-icon"><img src="Asset/automation.png" alt="icon"></div>
+                <div class="status-info"><p>Auto Lampu</p><span class="state" id="otomatis_lampuState">NONAKTIF</span></div>
+            </div>
+            <div class="status-card off" id="otomatis_pompaCard">
+                <div class="status-icon"><img src="Asset/automation.png" alt="icon"></div>
+                <div class="status-info"><p>Auto Pompa</p><span class="state" id="otomatis_pompaState">NONAKTIF</span></div>
+            </div>
+        </div>
+    </div>
+
+    <a href="home.html" class="back-button">&#8592;</a>
+
+    <script>
+        const MQTT_BROKER_URL = 'wss://broker.emqx.io:8084/mqtt';
+        const MQTT_TOPIC_PREFIX = 'smart_home/';
+
+        let mqttClient = null;
+
+        // Daftar nama perangkat sesuai memori di Python
+        const allDevices = [
+            'lampu_utama', 'lampu_kamar', 'lampu_tamu', 'colokan_terminal',
+            'kipas', 'pompa_penyiram', 'solenoid_valve', 'solenoid_door',
+            'tirai', 'ac_power', 'otomatis_lampu', 'otomatis_pompa'
+        ];
+
+        function connectToMQTT() {
+            updateMqttStatus('Connecting', 'connecting');
+            const options = {
+                clientId: 'smart_home_status_' + Math.random().toString(16).substr(2, 8),
+                clean: true, reconnectPeriod: 1000, connectTimeout: 30000
+            };
+            
+            mqttClient = mqtt.connect(MQTT_BROKER_URL, options);
+
+            mqttClient.on('connect', () => {
+                updateMqttStatus('Connected', 'connected');
+                mqttClient.subscribe(MQTT_TOPIC_PREFIX + 'status', { qos: 0 });
+                
+                // Trigger Python untuk mengirim seluruh isi memori statusnya
+                mqttClient.publish(MQTT_TOPIC_PREFIX + 'request', "REQ_ALL", { qos: 0 });
+            });
+
+            mqttClient.on('message', (topic, message) => {
+                parseStatus(message.toString());
+            });
+
+            mqttClient.on('error', () => updateMqttStatus('Error', 'disconnected'));
+            mqttClient.on('close', () => updateMqttStatus('Disconnected', 'disconnected'));
+        }
+
+        function parseStatus(message) {
+            if (!message.includes(':')) return;
+
+            const parts = message.split(':');
+            if (parts.length < 2) return;
+
+            // Bersihkan nama alat (misal: "lampu_utama") dan statusnya (misal: "ON (SYNC)")
+            const deviceName = parts[0].trim().toLowerCase();
+            const statusRaw = parts[1].trim().toUpperCase();
+
+            // Jika perangkat ada di list UI dashboard kita, maka perbarui
+            if (allDevices.includes(deviceName)) {
+                updateUI(deviceName, statusRaw);
+            }
+        }
+
+        function updateUI(device, statusText) {
+            const card = document.getElementById(device + 'Card');
+            const stateText = document.getElementById(device + 'State');
+
+            if (!card || !stateText) return;
+
+            let isOn = false;
+            let displayState = '';
+
+            // Penentuan Logika Khusus tiap perangkat
+            if (device === 'solenoid_door') {
+                isOn = statusText.includes('ON') || statusText.includes('BUKA');
+                displayState = isOn ? 'TERBUKA' : 'TERKUNCI';
+            } 
+            else if (device === 'solenoid_valve') {
+                isOn = statusText.includes('ON') || statusText.includes('BUKA');
+                displayState = isOn ? 'MENGALIR' : 'TERTUTUP';
+            }
+            else if (device === 'tirai') {
+                isOn = statusText.includes('BUKA') || statusText.includes('OPEN');
+                const isTutup = statusText.includes('TUTUP') || statusText.includes('CLOSE');
+                
+                if (isOn) displayState = 'TERBUKA';
+                else if (isTutup) displayState = 'TERTUTUP';
+                else { displayState = 'STOP'; isOn = false; }
+            }
+            else if (device.includes('otomatis')) {
+                isOn = statusText.includes('ON');
+                displayState = isOn ? 'AKTIF' : 'NONAKTIF';
+            }
+            else {
+                // Lampu, AC, Kipas, Terminal
+                isOn = statusText.includes('ON');
+                displayState = isOn ? 'NYALA' : 'MATI';
+            }
+
+            // Eksekusi perubahan warna kartu (Class on/off)
+            card.className = `status-card ${isOn ? 'on' : 'off'}`;
+            // Eksekusi perubahan teks status
+            stateText.textContent = displayState;
+        }
+
+        function updateMqttStatus(text, statusClass) {
+            const el = document.getElementById('mqttStatus');
+            if (el) { el.textContent = `MQTT: ${text}`; el.className = 'mqtt-status ' + statusClass; }
+        }
+
+        window.onload = function() {
+            connectToMQTT();
+        };
+    </script>
+</body>
+</html>

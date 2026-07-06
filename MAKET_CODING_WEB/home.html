@@ -22,6 +22,7 @@
     <div class="hamburger-menu" id="hamburgerMenu">
         <span class="close-menu" onclick="toggleMenu()">×</span>
         <ul class="menu-items">
+            <li><a href="status.html">Dashboard Status</a></li>
             <li><a href="lampu.html">Lampu</a></li>
             <li><a href="ac.html">AC</a></li>
             <li><a href="terminal.html">Terminal Listrik</a></li>
@@ -57,9 +58,11 @@
             <input type="text" id="userInput" placeholder="Masukkan Perintah...">
             <button onclick="sendMessage()"><img src="Asset/send.png" alt="sendMessage"></button>
             <button onclick="startVoiceRecognition()"><img src="Asset/microphone.png" alt="microphone"></button>
+            
+            <button id="ttsToggleBtn" onclick="toggleTTS()" style="font-size: 18px; background-color: #4CAF50; color: white; border-radius: 50%; width: 40px; height: 40px; border: none; cursor: pointer;">🔊</button>
         </div>
     </div>
 
-    <script src="home.js"></script>
+    <script src="home.js?v=3"></script>
 </body>
 </html>

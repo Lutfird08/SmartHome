@@ -1,6 +1,7 @@
 // ==========================================
 //  HOME.JS — FIXED MQTT TOPIC & VOICE REPLY
-//  + TEXT TO SPEECH (TTS) untuk balasan Asisten
+//  + TEXT TO SPEECH (TTS)
+//  + SINKRONISASI STATUS ANTAR HALAMAN
 // ==========================================
 
 const MQTT_BROKER_URL   = 'wss://broker.emqx.io:8084/mqtt';
@@ -11,20 +12,19 @@ const TOPIC_STATUS      = MQTT_TOPIC_PREFIX + 'status';
 const TOPIC_SENSOR      = MQTT_TOPIC_PREFIX + 'sensor';
 const TOPIC_VOICE_INPUT = MQTT_TOPIC_PREFIX + 'voice_input';
 const TOPIC_VOICE_REPLY = MQTT_TOPIC_PREFIX + 'voice_reply';
+const TOPIC_REQUEST     = MQTT_TOPIC_PREFIX + 'request';
 
 let mqttClient   = null;
 let isConnected  = false;
 
 // =====================================================
-// TEXT TO SPEECH (TTS) — Web Speech API
-// Fix: Chrome Android butuh interaksi user dulu
+// TEXT TO SPEECH (TTS)
 // =====================================================
-let ttsEnabled      = true;   // default: suara ON
-let ttsVoice        = null;   // voice yang dipilih
-let ttsUnlocked     = false;  // apakah sudah di-unlock oleh user
-let ttsPendingQueue = [];      // antrian teks yang menunggu unlock
+let ttsEnabled      = true;   
+let ttsVoice        = null;   
+let ttsUnlocked     = false;  
+let ttsPendingQueue = [];      
 
-// Inisialisasi TTS — cari suara bahasa Indonesia
 function initTTS() {
     if (!('speechSynthesis' in window)) {
         console.warn('Browser tidak mendukung TTS');
@@ -37,25 +37,17 @@ function initTTS() {
         ttsVoice = voices.find(v => v.lang === 'id-ID') ||
                    voices.find(v => v.lang.startsWith('id')) ||
                    voices[0] || null;
-        if (ttsVoice) console.log('TTS Voice:', ttsVoice.name, ttsVoice.lang);
     }
 
     loadVoices();
     window.speechSynthesis.onvoiceschanged = loadVoices;
 
-    // ── KUNCI UTAMA: unlock TTS saat user pertama kali sentuh layar ──
-    // Chrome Android memblokir audio sampai ada interaksi user
     function unlockTTS() {
         if (ttsUnlocked) return;
-
-        // Putar utterance kosong (silent) untuk "membuka kunci" audio context
         const silent = new SpeechSynthesisUtterance('');
         silent.volume = 0;
         silent.onend = () => {
             ttsUnlocked = true;
-            console.log('✅ TTS unlocked!');
-
-            // Putar semua teks yang tertunda saat masih terkunci
             if (ttsPendingQueue.length > 0) {
                 const text = ttsPendingQueue.shift();
                 speakNow(text);
@@ -63,23 +55,18 @@ function initTTS() {
             }
         };
         window.speechSynthesis.speak(silent);
-
-        // Hapus listener setelah unlock berhasil
         document.removeEventListener('touchstart', unlockTTS);
         document.removeEventListener('click',      unlockTTS);
         document.removeEventListener('keydown',    unlockTTS);
     }
 
-    // Dengarkan interaksi pertama user (tap, klik, atau ketik)
     document.addEventListener('touchstart', unlockTTS, { once: true });
     document.addEventListener('click',      unlockTTS, { once: true });
     document.addEventListener('keydown',    unlockTTS, { once: true });
 }
 
-// Fungsi internal untuk benar-benar bicara
 function speakNow(text) {
     if (!('speechSynthesis' in window)) return;
-
     window.speechSynthesis.cancel();
 
     const utterance    = new SpeechSynthesisUtterance(text);
@@ -90,7 +77,6 @@ function speakNow(text) {
 
     if (ttsVoice) utterance.voice = ttsVoice;
 
-    // Workaround bug Chrome: TTS berhenti sendiri setelah 15 detik
     utterance.onstart = () => {
         const resumeTimer = setInterval(() => {
             if (window.speechSynthesis.speaking) {
@@ -106,22 +92,17 @@ function speakNow(text) {
     window.speechSynthesis.speak(utterance);
 }
 
-// Fungsi utama bicara — dipanggil dari luar
 function speak(text) {
     if (!ttsEnabled) return;
     if (!('speechSynthesis' in window)) return;
 
     if (ttsUnlocked) {
-        // Sudah unlock — langsung bicara
         speakNow(text);
     } else {
-        // Belum unlock — simpan ke antrian, tunggu user tap layar
-        ttsPendingQueue = [text]; // simpan hanya yang terbaru
-        console.log('⏳ TTS pending (menunggu interaksi user):', text);
+        ttsPendingQueue = [text]; 
     }
 }
 
-// Toggle ON/OFF suara dari tombol di UI
 function toggleTTS() {
     ttsEnabled = !ttsEnabled;
     const btn  = document.getElementById('ttsToggleBtn');
@@ -134,7 +115,7 @@ function toggleTTS() {
 }
 
 // =====================================================
-// MAPPING PERINTAH — sesuai Arduino Mega (.ino)
+// MAPPING PERINTAH 
 // =====================================================
 const deviceCommands = {
     0:  { on: 'ON 0',       off: 'OFF 0'    },
@@ -153,13 +134,6 @@ const deviceCommands = {
     'tirai_buka':  'TIRAIBUKA 45',
     'tirai_tutup': 'TIRAITUTUP 45',
     'tirai_stop':  'TIRAIOFF'
-};
-
-const deviceNames = {
-    0: 'lampu_utama',   1: 'lampu_kamar',  2: 'lampu_tamu',
-    3: 'colokan_terminal', 6: 'kipas',     7: 'pompa_penyiram',
-    8: 'solenoid_valve', 9: 'solenoid_door',
-    10: 'otomatis_pompa', 11: 'otomatis_lampu'
 };
 
 let deviceStatus = { lamp: 'Mati', ac: 'Mati', door: 'Terkunci' };
@@ -187,6 +161,10 @@ function connectToMQTT() {
         isConnected = true;
         subscribeToTopics();
         updateConnectionStatus(true);
+        
+        mqttClient.publish(TOPIC_REQUEST, "REQ_ALL", { qos: 0 });
+        console.log("🔄 Meminta sinkronisasi status ke server...");
+
         setTimeout(() => sendSerialCommand('STATUS'), 1000);
         addChatMessage('System', '✅ Terhubung ke Smart Home System');
     });
@@ -216,10 +194,9 @@ function handleIncomingMessage(topic, message) {
         message.startsWith("ESP32:")             ||
         message.startsWith("Command received:")) return;
 
-    // ── Balasan dari Voice Assistant (Raspberry Pi) ──
     if (topic === TOPIC_VOICE_REPLY) {
         addChatMessage('Asisten', message);
-        speak(message);   // ← SUARA KELUAR DI SINI
+        speak(message);   
         return;
     }
 
@@ -239,7 +216,9 @@ function parseArduinoResponse(message) {
                        status.includes('NYALA')   || status.includes('BUKA')  ||
                        status.includes('TERBUKA') || status.includes('PULSE');
 
-    addChatMessage('Arduino', `${parts[0].trim()}: ${parts[1].trim()}`);
+    if (!status.includes('SYNC')) {
+        addChatMessage('Arduino', `${parts[0].trim()}: ${parts[1].trim()}`);
+    }
 
     switch (deviceName) {
         case 'lampu_utama':
@@ -257,11 +236,17 @@ function parseArduinoResponse(message) {
             updateDeviceStatus('door', isOn ? 'Terbuka' : 'Terkunci');
             break;
         case 'ac_power':
-            allDeviceStatus.ac = !allDeviceStatus.ac;
+            if (status.includes('ON')) {
+                allDeviceStatus.ac = true;
+            } else if (status.includes('OFF')) {
+                allDeviceStatus.ac = false;
+            } else {
+                allDeviceStatus.ac = !allDeviceStatus.ac; 
+            }
             updateDeviceStatus('ac', allDeviceStatus.ac ? 'Nyala' : 'Mati');
             break;
         case 'tirai':
-            addChatMessage('System', `Tirai: ${parts[1].trim()}`);
+            if (!status.includes('SYNC')) addChatMessage('System', `Tirai: ${parts[1].trim()}`);
             break;
     }
 }
@@ -343,20 +328,10 @@ function processDirectCommand(message) {
     if (msg.includes('lampu utama'))  { handleOnOff(0, msg, 'Lampu Utama'); return true; }
     if (msg.includes('lampu kamar'))  { handleOnOff(1, msg, 'Lampu Kamar'); return true; }
     if (msg.includes('lampu tamu'))   { handleOnOff(2, msg, 'Lampu Tamu');  return true; }
-
-    if (msg.includes('colokan') || msg.includes('terminal')) {
-        handleOnOff(3, msg, 'Colokan Terminal'); return true;
-    }
-
+    if (msg.includes('colokan') || msg.includes('terminal')) { handleOnOff(3, msg, 'Colokan Terminal'); return true; }
     if (msg.includes('kipas')) { handleOnOff(6, msg, 'Kipas'); return true; }
-
-    if (msg.includes('pompa') || msg.includes('siram')) {
-        handleOnOff(7, msg, 'Pompa Penyiram'); return true;
-    }
-
-    if (msg.includes('valve') || msg.includes('saluran')) {
-        handleOnOff(8, msg, 'Solenoid Valve'); return true;
-    }
+    if (msg.includes('pompa') || msg.includes('siram')) { handleOnOff(7, msg, 'Pompa Penyiram'); return true; }
+    if (msg.includes('valve') || msg.includes('saluran')) { handleOnOff(8, msg, 'Solenoid Valve'); return true; }
 
     if (msg.includes('pintu') || msg.includes('kunci')) {
         sendSerialCommand('ON 9');
@@ -411,12 +386,7 @@ function addChatMessage(sender, message) {
     const div       = document.createElement('div');
     div.className   = sender === 'Anda' ? 'message user' : 'message system';
 
-    const colors = {
-        Arduino: '#0066cc',
-        Sensor:  '#FF9800',
-        System:  '#666',
-        Asisten: '#2e7d32'
-    };
+    const colors = { Arduino: '#0066cc', Sensor:  '#FF9800', System:  '#666', Asisten: '#2e7d32' };
     if (colors[sender]) {
         div.style.color     = colors[sender];
         div.style.fontSize  = sender === 'Sensor' ? '0.85em' : '';
@@ -483,24 +453,6 @@ window.onload = function () {
     connectToMQTT();
     initTTS();
 
-    // Tambah tombol toggle suara ke area input
-    const inputArea = document.querySelector('.input-area');
-    if (inputArea) {
-        const ttsBtn              = document.createElement('button');
-        ttsBtn.id                 = 'ttsToggleBtn';
-        ttsBtn.textContent        = '🔊';
-        ttsBtn.title              = 'Suara ON (klik untuk mute)';
-        ttsBtn.style.backgroundColor = '#4CAF50';
-        ttsBtn.style.borderRadius = '50%';
-        ttsBtn.style.width        = '40px';
-        ttsBtn.style.height       = '40px';
-        ttsBtn.style.fontSize     = '18px';
-        ttsBtn.style.cursor       = 'pointer';
-        ttsBtn.style.border       = 'none';
-        ttsBtn.addEventListener('click', toggleTTS);
-        inputArea.appendChild(ttsBtn);
-    }
-
     const userInput = document.getElementById('userInput');
     if (userInput) {
         userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
@@ -511,7 +463,6 @@ window.onload = function () {
     setTimeout(() => {
         addChatMessage('System', '🏠 Selamat datang di Smart Home System!');
         addChatMessage('System', '💬 Ketik perintah langsung atau tanya ke Asisten AI');
-        addChatMessage('System', '🔊 Asisten akan berbicara saat membalas — klik 🔊 untuk mute');
         addChatMessage('System', '📋 Ketik "status" untuk cek semua perangkat');
     }, 1500);
 };

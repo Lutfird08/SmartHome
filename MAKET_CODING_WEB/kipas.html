@@ -232,66 +232,41 @@
         let fanStatus = false;
         let fanSpeed = 33;
 
-        const device = { id: 'fan', name: 'Kipas', index: 6 };
+        // PERBAIKAN: Tambah mqttName
+        const device = { id: 'fan', name: 'Kipas', index: 6, mqttName: 'kipas' };
 
         function connectToMQTT() {
             updateMqttStatus('Connecting', 'connecting');
-
-            const options = {
-                clientId: 'smart_home_fan_' + Math.random().toString(16).substr(2, 8),
-                clean: true,
-                reconnectPeriod: 1000,
-                connectTimeout: 30000
-            };
-
+            const options = { clientId: 'smart_home_fan_' + Math.random().toString(16).substr(2, 8), clean: true, reconnectPeriod: 1000, connectTimeout: 30000 };
             mqttClient = mqtt.connect(MQTT_BROKER_URL, options);
 
             mqttClient.on('connect', () => {
                 isConnected = true;
                 updateMqttStatus('Connected', 'connected');
                 subscribeToTopics();
+                
+                // PERBAIKAN: Minta Sinkronisasi
+                mqttClient.publish(MQTT_TOPIC_PREFIX + 'request', "REQ_ALL", { qos: 0 });
+
                 setTimeout(() => {
                     sendCommand('STATUS');
                     showNotification('Terhubung ke sistem Smart Home', 'success');
                 }, 1000);
             });
 
-            mqttClient.on('message', (topic, message) => {
-                handleMessage(topic, message.toString());
-            });
-
-            mqttClient.on('error', () => {
-                updateMqttStatus('Error', 'disconnected');
-                isConnected = false;
-                showNotification('Error koneksi MQTT', 'error');
-            });
-
-            mqttClient.on('close', () => {
-                updateMqttStatus('Disconnected', 'disconnected');
-                isConnected = false;
-            });
+            mqttClient.on('message', (topic, message) => handleMessage(topic, message.toString()));
+            mqttClient.on('error', () => { updateMqttStatus('Error', 'disconnected'); isConnected = false; });
+            mqttClient.on('close', () => { updateMqttStatus('Disconnected', 'disconnected'); isConnected = false; });
         }
 
         function subscribeToTopics() {
-            const topics = [
-                MQTT_TOPIC_PREFIX + 'response',
-                MQTT_TOPIC_PREFIX + 'status',
-                MQTT_TOPIC_PREFIX + 'sensor'
-            ];
-            topics.forEach(topic => {
+            [MQTT_TOPIC_PREFIX + 'response', MQTT_TOPIC_PREFIX + 'status', MQTT_TOPIC_PREFIX + 'sensor'].forEach(topic => {
                 mqttClient.subscribe(topic, { qos: 0 });
             });
         }
 
         function handleMessage(topic, message) {
-            if (message.includes("SISTEM KONTROL RUMAH") ||
-                message.includes("PERINTAH SERIAL:") ||
-                message.includes("Catatan:") ||
-                message.startsWith("ARDUINO_MEGA:") ||
-                message.startsWith("ESP32:") ||
-                message.includes("===============================")) {
-                return;
-            }
+            if (message.includes("SISTEM KONTROL RUMAH") || message.includes("PERINTAH SERIAL:")) return;
 
             const msgLower = message.toLowerCase();
             if (msgLower.includes('kipas') && msgLower.includes(':')) {
@@ -299,68 +274,53 @@
                 if (parts.length >= 2) {
                     const status = parts[1].trim().toUpperCase();
                     const isOn = status.includes('ON') || status.includes('AKTIF') || status.includes('NYALA');
+                    const isSync = status.includes('SYNC');
+
                     updateFanUI(isOn);
-                    showNotification(`Kipas ${isOn ? 'dinyalakan' : 'dimatikan'}`, 'success');
+                    // PERBAIKAN: Filter notifikasi sinkronisasi
+                    if (!isSync) {
+                        showNotification(`Kipas ${isOn ? 'dinyalakan' : 'dimatikan'}`, 'success');
+                    }
                 }
             }
         }
 
         function updateMqttStatus(text, statusClass) {
             const element = document.getElementById('mqttStatus');
-            if (element) {
-                element.textContent = `MQTT: ${text}`;
-                element.className = 'mqtt-status ' + statusClass;
-            }
+            if (element) { element.textContent = `MQTT: ${text}`; element.className = 'mqtt-status ' + statusClass; }
         }
 
         function updateFanUI(isOn) {
             fanStatus = isOn;
-
             const checkbox = document.getElementById('fan');
             if (checkbox) checkbox.checked = isOn;
-
             const statusElement = document.getElementById('fanStatus');
-            if (statusElement) {
-                statusElement.textContent = `Status: ${isOn ? 'NYALA' : 'MATI'}`;
-            }
-
+            if (statusElement) statusElement.textContent = `Status: ${isOn ? 'NYALA' : 'MATI'}`;
             const cardElement = document.getElementById('fanCard');
-            if (cardElement) {
-                cardElement.className = `fan-card ${isOn ? 'on' : 'off'}`;
-            }
+            if (cardElement) cardElement.className = `fan-card ${isOn ? 'on' : 'off'}`;
         }
 
         function updateSpeedUI(speed) {
             const speedButton = document.getElementById('fanSpeed');
-            if (speedButton) {
-                speedButton.textContent = speed;
-                speedButton.className = `speed-control speed-${speed}`;
-            }
+            if (speedButton) { speedButton.textContent = speed; speedButton.className = `speed-control speed-${speed}`; }
         }
 
         function sendCommand(command) {
-            if (!isConnected || !mqttClient) {
-                showNotification('Tidak terhubung ke server MQTT', 'error');
-                return false;
-            }
-            mqttClient.publish(MQTT_TOPIC_PREFIX + 'control', command, { qos: 0 }, (err) => {
-                if (err) showNotification('Gagal mengirim perintah', 'error');
-            });
+            if (!isConnected || !mqttClient) return false;
+            mqttClient.publish(MQTT_TOPIC_PREFIX + 'control', command, { qos: 0 });
             return true;
         }
 
         function toggleFan() {
             const newState = !fanStatus;
             updateFanUI(newState);
-            const command = newState ? `KIPASON ${fanSpeed}` : 'KIPASOFF';
-            sendCommand(command);
+            sendCommand(newState ? `KIPASON ${fanSpeed}` : 'KIPASOFF');
         }
 
         function changeSpeed() {
             const currentSpeed = parseInt(document.getElementById('fanSpeed').textContent);
             const newSpeed = currentSpeed >= 3 ? 1 : currentSpeed + 1;
             const speedMap = { 1: 33, 2: 66, 3: 100 };
-
             fanSpeed = speedMap[newSpeed];
             updateSpeedUI(newSpeed);
 
@@ -376,8 +336,7 @@
             const notification = document.getElementById('notification');
             if (notification) {
                 notification.textContent = message;
-                notification.className = 'notification';
-                if (type === 'error') notification.classList.add('error');
+                notification.className = 'notification ' + (type === 'error' ? 'error' : '');
                 notification.style.display = 'block';
                 setTimeout(() => { notification.style.display = 'none'; }, 3000);
             }
@@ -385,9 +344,7 @@
 
         function setupEventListeners() {
             const checkbox = document.getElementById('fan');
-            if (checkbox) {
-                checkbox.addEventListener('change', toggleFan);
-            }
+            if (checkbox) checkbox.addEventListener('change', toggleFan);
 
             const card = document.getElementById('fanCard');
             if (card) {
@@ -399,7 +356,6 @@
                     }
                 });
             }
-
             const speedButton = document.getElementById('fanSpeed');
             if (speedButton) speedButton.addEventListener('click', changeSpeed);
         }

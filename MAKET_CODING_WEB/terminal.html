@@ -221,158 +221,83 @@
         let isConnected = false;
         let terminalStatus = false;
         
-        const device = {
-            id: 'terminal',
-            name: 'Colokan Terminal',
-            index: 3,
-            onCommand: 'ON 3',
-            offCommand: 'OFF 3'
-        };
+        // PERBAIKAN: Tambah mqttName
+        const device = { id: 'terminal', name: 'Colokan Terminal', index: 3, onCommand: 'ON 3', offCommand: 'OFF 3', mqttName: 'colokan_terminal' };
         
         function connectToMQTT() {
-            console.log('Menghubungkan ke MQTT...');
             updateMqttStatus('Connecting', 'connecting');
-            
-            const options = {
-                clientId: 'smart_home_terminal_' + Math.random().toString(16).substr(2, 8),
-                clean: true,
-                reconnectPeriod: 1000,
-                connectTimeout: 30000
-            };
-        
+            const options = { clientId: 'smart_home_terminal_' + Math.random().toString(16).substr(2, 8), clean: true, reconnectPeriod: 1000, connectTimeout: 30000 };
             mqttClient = mqtt.connect(MQTT_BROKER_URL, options);
         
             mqttClient.on('connect', () => {
-                console.log('Terhubung ke MQTT');
                 isConnected = true;
                 updateMqttStatus('Connected', 'connected');
                 subscribeToTopics();
-                setTimeout(() => {
-                    sendCommand('STATUS');
-                    showNotification('Terhubung ke sistem Smart Home', 'success');
-                }, 1000);
+
+                // PERBAIKAN: Minta Sinkronisasi
+                mqttClient.publish(MQTT_TOPIC_PREFIX + 'request', "REQ_ALL", { qos: 0 });
+                setTimeout(() => sendCommand('STATUS'), 1000);
             });
         
-            mqttClient.on('message', (topic, message) => {
-                handleMessage(topic, message.toString());
-            });
-        
-            mqttClient.on('error', (error) => {
-                console.error('MQTT Error:', error);
-                updateMqttStatus('Error', 'disconnected');
-                isConnected = false;
-                showNotification('Error koneksi MQTT', 'error');
-            });
-            
-            mqttClient.on('close', () => {
-                console.log('MQTT disconnected');
-                updateMqttStatus('Disconnected', 'disconnected');
-                isConnected = false;
-            });
+            mqttClient.on('message', (topic, message) => handleMessage(topic, message.toString()));
+            mqttClient.on('error', () => { updateMqttStatus('Error', 'disconnected'); isConnected = false; });
+            mqttClient.on('close', () => { updateMqttStatus('Disconnected', 'disconnected'); isConnected = false; });
         }
         
         function subscribeToTopics() {
-            const topics = [
-                MQTT_TOPIC_PREFIX + 'response',
-                MQTT_TOPIC_PREFIX + 'status',
-                MQTT_TOPIC_PREFIX + 'sensor'
-            ];
-            topics.forEach(topic => {
-                mqttClient.subscribe(topic, { qos: 0 }, (err) => {
-                    if (!err) console.log('Subscribed to:', topic);
-                });
-            });
+            ['response', 'status', 'sensor'].forEach(t => mqttClient.subscribe(MQTT_TOPIC_PREFIX + t, { qos: 0 }));
         }
         
         function handleMessage(topic, message) {
-            console.log('Received:', topic, '=>', message);
-            
-            if (message.includes("SISTEM KONTROL RUMAH") || 
-                message.includes("PERINTAH SERIAL:") ||
-                message.includes("Catatan:") ||
-                message.startsWith("ARDUINO_MEGA:") ||
-                message.startsWith("ESP32:")) {
-                return;
-            }
-            
-            if (message.includes(':')) {
-                const parts = message.split(':');
-                if (parts.length >= 2) {
-                    const deviceName = parts[0].trim();
-                    const status = parts[1].trim().toUpperCase();
-                    const isOn = status.includes('ON') || status.includes('AKTIF');
-                    
-                    if (deviceName.includes(device.name) || 
-                        deviceName === device.name ||
-                        deviceName.includes('Terminal') ||
-                        deviceName.includes('Colokan')) {
-                        
-                        updateDeviceUI(isOn);
-                        const action = isOn ? 'dinyalakan' : 'dimatikan';
-                        showNotification(`${device.name} ${action}`, 'success');
-                    }
+            if (message.includes("SISTEM KONTROL RUMAH") || message.includes("PERINTAH SERIAL:")) return;
+            if (!message.includes(':')) return;
+
+            const parts = message.split(':');
+            if (parts.length >= 2) {
+                const deviceName = parts[0].trim().toLowerCase();
+                const status = parts[1].trim().toUpperCase();
+                const isOn = status.includes('ON') || status.includes('AKTIF');
+                const isSync = status.includes('SYNC');
+                
+                if (deviceName.includes('terminal') || deviceName.includes('colokan') || deviceName === device.mqttName) {
+                    updateDeviceUI(isOn);
+                    if (!isSync) showNotification(`${device.name} ${isOn ? 'dinyalakan' : 'dimatikan'}`, 'success');
                 }
             }
         }
         
         function updateMqttStatus(text, statusClass) {
             const element = document.getElementById('mqttStatus');
-            if (element) {
-                element.textContent = `MQTT: ${text}`;
-                element.className = 'mqtt-status ' + statusClass;
-            }
+            if (element) { element.textContent = `MQTT: ${text}`; element.className = 'mqtt-status ' + statusClass; }
         }
         
         function updateDeviceUI(isOn) {
             terminalStatus = isOn;
-            
             const checkbox = document.getElementById('terminal');
             if (checkbox) checkbox.checked = isOn;
-            
             const statusElement = document.getElementById('terminalStatus');
-            if (statusElement) {
-                statusElement.textContent = `Status: ${isOn ? 'NYALA' : 'MATI'}`;
-            }
-            
+            if (statusElement) statusElement.textContent = `Status: ${isOn ? 'NYALA' : 'MATI'}`;
             const cardElement = document.getElementById('terminalCard');
-            if (cardElement) {
-                cardElement.className = `terminal-card ${isOn ? 'on' : 'off'}`;
-            }
+            if (cardElement) cardElement.className = `terminal-card ${isOn ? 'on' : 'off'}`;
         }
         
         function sendCommand(command) {
-            if (!isConnected || !mqttClient) {
-                showNotification('Tidak terhubung ke server MQTT', 'error');
-                return false;
-            }
-            
-            const topic = MQTT_TOPIC_PREFIX + 'control';
-            console.log('Sending:', command);
-            
-            mqttClient.publish(topic, command, { qos: 0 }, (err) => {
-                if (err) {
-                    console.error('Failed to send:', err);
-                    showNotification('Gagal mengirim perintah', 'error');
-                }
-            });
-            
+            if (!isConnected || !mqttClient) return false;
+            mqttClient.publish(MQTT_TOPIC_PREFIX + 'control', command, { qos: 0 });
             return true;
         }
         
         function toggleDevice() {
             const newState = !terminalStatus;
-            const command = newState ? device.onCommand : device.offCommand;
-            
             updateDeviceUI(newState);
-            sendCommand(command);
+            sendCommand(newState ? device.onCommand : device.offCommand);
         }
         
         function showNotification(message, type = 'info') {
             const notification = document.getElementById('notification');
             if (notification) {
                 notification.textContent = message;
-                notification.className = 'notification';
-                if (type === 'error') notification.classList.add('error');
+                notification.className = 'notification ' + (type === 'error' ? 'error' : '');
                 notification.style.display = 'block';
                 setTimeout(() => { notification.style.display = 'none'; }, 3000);
             }
@@ -380,11 +305,7 @@
         
         function setupEventListeners() {
             const checkbox = document.getElementById('terminal');
-            if (checkbox) {
-                checkbox.addEventListener('change', () => {
-                    toggleDevice();
-                });
-            }
+            if (checkbox) checkbox.addEventListener('change', toggleDevice);
             
             const card = document.getElementById('terminalCard');
             if (card) {

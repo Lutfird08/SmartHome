@@ -200,70 +200,42 @@
 
         let mqttClient = null;
         let isConnected = false;
-
         let plantStatus = false;
         let otomatisStatus = false;
 
-        // index sesuai buttonNames di Arduino
+        // PERBAIKAN: Tambah mqttName
         const devices = {
-            plant:    { index: 7,  onCommand: 'ON 7',  offCommand: 'OFF 7',  keys: ['pompa_penyiram', 'Penyiram'] },
-            otomatis: { index: 10, onCommand: 'ON 10', offCommand: 'OFF 10', keys: ['otomatis_pompa', 'Otomatis'] }
+            plant:    { index: 7,  onCommand: 'ON 7',  offCommand: 'OFF 7',  keys: ['pompa_penyiram', 'Penyiram'], mqttName: 'pompa_penyiram' },
+            otomatis: { index: 10, onCommand: 'ON 10', offCommand: 'OFF 10', keys: ['otomatis_pompa', 'Otomatis'], mqttName: 'otomatis_pompa' }
         };
 
         function connectToMQTT() {
             updateMqttStatus('Connecting', 'connecting');
-
-            const options = {
-                clientId: 'smart_home_plant_' + Math.random().toString(16).substr(2, 8),
-                clean: true,
-                reconnectPeriod: 1000,
-                connectTimeout: 30000
-            };
-
+            const options = { clientId: 'smart_home_plant_' + Math.random().toString(16).substr(2, 8), clean: true, reconnectPeriod: 1000, connectTimeout: 30000 };
             mqttClient = mqtt.connect(MQTT_BROKER_URL, options);
 
             mqttClient.on('connect', () => {
                 isConnected = true;
                 updateMqttStatus('Connected', 'connected');
                 subscribeToTopics();
-                setTimeout(() => {
-                    sendCommand('STATUS');
-                    showNotification('Terhubung ke sistem Smart Home', 'success');
-                }, 1000);
+                
+                // PERBAIKAN: Minta Sinkronisasi
+                mqttClient.publish(MQTT_TOPIC_PREFIX + 'request', "REQ_ALL", { qos: 0 });
+
+                setTimeout(() => sendCommand('STATUS'), 1000);
             });
 
-            mqttClient.on('message', (topic, message) => {
-                handleMessage(topic, message.toString());
-            });
-
-            mqttClient.on('error', () => {
-                updateMqttStatus('Error', 'disconnected');
-                isConnected = false;
-                showNotification('Error koneksi MQTT', 'error');
-            });
-
-            mqttClient.on('close', () => {
-                updateMqttStatus('Disconnected', 'disconnected');
-                isConnected = false;
-            });
+            mqttClient.on('message', (topic, message) => handleMessage(topic, message.toString()));
+            mqttClient.on('error', () => { updateMqttStatus('Error', 'disconnected'); isConnected = false; });
+            mqttClient.on('close', () => { updateMqttStatus('Disconnected', 'disconnected'); isConnected = false; });
         }
 
         function subscribeToTopics() {
-            ['response', 'status', 'sensor'].forEach(t => {
-                mqttClient.subscribe(MQTT_TOPIC_PREFIX + t, { qos: 0 });
-            });
+            ['response', 'status', 'sensor'].forEach(t => mqttClient.subscribe(MQTT_TOPIC_PREFIX + t, { qos: 0 }));
         }
 
         function handleMessage(topic, message) {
-            if (message.includes("SISTEM KONTROL RUMAH") ||
-                message.includes("PERINTAH SERIAL:") ||
-                message.includes("Catatan:") ||
-                message.startsWith("ARDUINO_MEGA:") ||
-                message.startsWith("ESP32:") ||
-                message.includes("===============================")) {
-                return;
-            }
-
+            if (message.includes("SISTEM KONTROL RUMAH") || message.includes("PERINTAH SERIAL:")) return;
             if (!message.includes(':')) return;
 
             const parts = message.split(':');
@@ -272,24 +244,22 @@
             const deviceName = parts[0].trim().toLowerCase();
             const status = parts[1].trim().toUpperCase();
             const isOn = status.includes('ON') || status.includes('AKTIF');
+            const isSync = status.includes('SYNC');
 
-            if (devices.plant.keys.some(k => deviceName.includes(k.toLowerCase()))) {
+            if (devices.plant.keys.some(k => deviceName.includes(k.toLowerCase())) || deviceName === devices.plant.mqttName) {
                 updateDeviceUI('plant', isOn);
-                showNotification(`Penyiram ${isOn ? 'dinyalakan' : 'dimatikan'}`, 'success');
+                if (!isSync) showNotification(`Penyiram ${isOn ? 'dinyalakan' : 'dimatikan'}`, 'success');
             }
 
-            if (devices.otomatis.keys.some(k => deviceName.includes(k.toLowerCase()))) {
+            if (devices.otomatis.keys.some(k => deviceName.includes(k.toLowerCase())) || deviceName === devices.otomatis.mqttName) {
                 updateDeviceUI('otomatis', isOn);
-                showNotification(`Sistem Otomatis ${isOn ? 'aktif' : 'nonaktif'}`, 'success');
+                if (!isSync) showNotification(`Sistem Otomatis ${isOn ? 'aktif' : 'nonaktif'}`, 'success');
             }
         }
 
         function updateMqttStatus(text, statusClass) {
             const el = document.getElementById('mqttStatus');
-            if (el) {
-                el.textContent = `MQTT: ${text}`;
-                el.className = 'mqtt-status ' + statusClass;
-            }
+            if (el) { el.textContent = `MQTT: ${text}`; el.className = 'mqtt-status ' + statusClass; }
         }
 
         function updateDeviceUI(id, isOn) {
@@ -307,13 +277,8 @@
         }
 
         function sendCommand(command) {
-            if (!isConnected || !mqttClient) {
-                showNotification('Tidak terhubung ke server MQTT', 'error');
-                return false;
-            }
-            mqttClient.publish(MQTT_TOPIC_PREFIX + 'control', command, { qos: 0 }, (err) => {
-                if (err) showNotification('Gagal mengirim perintah', 'error');
-            });
+            if (!isConnected || !mqttClient) return false;
+            mqttClient.publish(MQTT_TOPIC_PREFIX + 'control', command, { qos: 0 });
             return true;
         }
 
@@ -329,8 +294,7 @@
             const el = document.getElementById('notification');
             if (el) {
                 el.textContent = message;
-                el.className = 'notification';
-                if (type === 'error') el.classList.add('error');
+                el.className = 'notification ' + (type === 'error' ? 'error' : '');
                 el.style.display = 'block';
                 setTimeout(() => { el.style.display = 'none'; }, 3000);
             }

@@ -40,7 +40,7 @@
         .mqtt-status.disconnected { background-color: #f44336; }
         .mqtt-status.connecting { background-color: #ff9800; }
         .container {
-            padding: 80px 20px 20px;
+            padding: 90px 20px 20px;
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 20px;
@@ -169,7 +169,6 @@
     <div id="notification" class="notification"></div>
 
     <div class="container">
-        <!-- Door Lock — index 9, solenoid_door, timer 5 detik di Arduino -->
         <div class="door-card off" id="doorCard">
             <div class="door-icon"><img src="Asset/door_lock.png" alt="door"></div>
             <p>Door Lock</p>
@@ -196,7 +195,7 @@
             index: 9,
             onCommand: 'ON 9',
             offCommand: 'OFF 9',
-            keys: ['solenoid_door', 'door']
+            mqttName: 'solenoid_door' // Ditambahkan agar match dengan server Python
         };
 
         function connectToMQTT() {
@@ -215,6 +214,10 @@
                 isConnected = true;
                 updateMqttStatus('Connected', 'connected');
                 subscribeToTopics();
+                
+                // PERBAIKAN SOLUSI 1: Meminta data status sinkronisasi terbaru
+                mqttClient.publish(MQTT_TOPIC_PREFIX + 'request', "REQ_ALL", { qos: 0 });
+
                 setTimeout(() => {
                     sendCommand('STATUS');
                     showNotification('Terhubung ke sistem Smart Home', 'success');
@@ -260,11 +263,19 @@
 
             const deviceName = parts[0].trim().toLowerCase();
             const status = parts[1].trim().toUpperCase();
+            
+            // Evaluasi Status dan Penanda Sinkronisasi
             const isOn = status.includes('ON') || status.includes('BUKA') || status.includes('TERBUKA');
+            const isSync = status.includes('SYNC');
 
-            if (device.keys.some(k => deviceName.includes(k.toLowerCase()))) {
+            // Cek kesesuaian dengan nama perangkat di Python
+            if (deviceName === device.mqttName || deviceName.includes('door')) {
                 updateDeviceUI(isOn);
-                showNotification(`Pintu ${isOn ? 'dibuka' : 'terkunci'}`, 'success');
+                
+                // PERBAIKAN: Hanya tampilkan notif jika aksi manual, bukan dari load awal halaman
+                if (!isSync) {
+                    showNotification(`Pintu ${isOn ? 'dibuka' : 'terkunci kembali'}`, 'success');
+                }
             }
         }
 

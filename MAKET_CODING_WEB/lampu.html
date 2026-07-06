@@ -245,14 +245,14 @@
         let mqttClient = null;
         let isConnected = false;
 
+        // PERBAIKAN: Menambahkan 'mqttName' agar cocok dengan data dari Server Python
         const devices = [
-            { id: 'lampuUtama', name: 'Lampu Utama',      index: 0, onCommand: 'ON 0',  offCommand: 'OFF 0' },
-            { id: 'lampuKamar', name: 'Lampu Kamar',      index: 1, onCommand: 'ON 1',  offCommand: 'OFF 1' },
-            { id: 'lampuTamu',  name: 'Lampu Tamu',       index: 2, onCommand: 'ON 2',  offCommand: 'OFF 2' },
-            { id: 'terminal',   name: 'Colokan Terminal', index: 3, onCommand: 'ON 3',  offCommand: 'OFF 3' }
+            { id: 'lampuUtama', name: 'Lampu Utama',      mqttName: 'lampu_utama',      index: 0, onCommand: 'ON 0',  offCommand: 'OFF 0' },
+            { id: 'lampuKamar', name: 'Lampu Kamar',      mqttName: 'lampu_kamar',      index: 1, onCommand: 'ON 1',  offCommand: 'OFF 1' },
+            { id: 'lampuTamu',  name: 'Lampu Tamu',       mqttName: 'lampu_tamu',       index: 2, onCommand: 'ON 2',  offCommand: 'OFF 2' },
+            { id: 'terminal',   name: 'Colokan Terminal', mqttName: 'colokan_terminal', index: 3, onCommand: 'ON 3',  offCommand: 'OFF 3' }
         ];
 
-        // Status perangkat (hanya ON/OFF, tidak ada pending)
         let deviceStatus = {};
         devices.forEach(device => { deviceStatus[device.id] = false; });
 
@@ -272,6 +272,10 @@
                 isConnected = true;
                 updateMqttStatus('Connected', 'connected');
                 subscribeToTopics();
+                
+                // PERBAIKAN: Minta status terbaru saat halaman lampu dibuka
+                mqttClient.publish(MQTT_TOPIC_PREFIX + 'request', "REQ_ALL", { qos: 0 });
+
                 setTimeout(() => {
                     sendCommand('STATUS');
                     showNotification('✅ Terhubung ke sistem Smart Home', 'success');
@@ -310,18 +314,26 @@
             if (message.includes(':')) {
                 const parts = message.split(':');
                 if (parts.length >= 2) {
-                    const deviceName = parts[0].trim();
+                    const deviceName = parts[0].trim().toLowerCase();
                     const status = parts[1].trim().toUpperCase();
                     const isOn = status.includes('ON') || status.includes('AKTIF');
+                    const isSync = status.includes('SYNC');
 
-                    const device = devices.find(d =>
-                        deviceName.includes(d.name) || deviceName === d.name
+                    // PERBAIKAN: Cocokkan dengan mqttName yang dikirim dari Python
+                    const device = devices.find(d => 
+                        deviceName === d.mqttName || 
+                        deviceName.includes(d.name.toLowerCase()) || 
+                        deviceName === d.name.toLowerCase()
                     );
 
                     if (device) {
                         updateDeviceUI(device.id, isOn);
-                        const action = isOn ? 'dinyalakan' : 'dimatikan';
-                        showNotification(`✅ ${device.name} ${action}`, 'success');
+                        
+                        // PERBAIKAN: Jangan tampilkan notifikasi jika itu dari proses SYNC 
+                        if (!isSync) {
+                            const action = isOn ? 'dinyalakan' : 'dimatikan';
+                            showNotification(`✅ ${device.name} ${action}`, 'success');
+                        }
                     }
                 }
             }

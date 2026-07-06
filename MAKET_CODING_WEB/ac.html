@@ -23,7 +23,7 @@
         .mqtt-status.disconnected { background-color: #f44336; }
         .mqtt-status.connecting { background-color: #ff9800; }
         .container {
-            padding: 80px 20px 20px;
+            padding: 90px 20px 20px;
             display: grid; grid-template-columns: repeat(2, 1fr);
             gap: 20px; max-width: 600px; margin: 0 auto;
         }
@@ -128,7 +128,6 @@
             { id: 'temp', name: 'Suhu AC',          upCommand: 'AC_UP',   downCommand: 'AC_DOWN'  }
         ];
 
-        // Status perangkat (hanya ON/OFF, tidak ada pending)
         let deviceStatus = { ac: false };
         let acTemperature = 18;
 
@@ -144,17 +143,24 @@
                 isConnected = true;
                 updateMqttStatus('Connected', 'connected');
                 subscribeToTopics();
+                
+                // PERBAIKAN SOLUSI 1: Minta status terbaru saat halaman AC dibuka
+                mqttClient.publish(MQTT_TOPIC_PREFIX + 'request', "REQ_ALL", { qos: 0 });
+
                 setTimeout(() => {
                     sendCommand('STATUS');
                     showNotification('✅ Terhubung ke sistem Smart Home', 'success');
                 }, 1000);
             });
+            
             mqttClient.on('message', (topic, message) => handleMessage(topic, message.toString()));
+            
             mqttClient.on('error', () => {
                 updateMqttStatus('Error', 'disconnected');
                 isConnected = false;
                 showNotification('❌ Error koneksi MQTT', 'error');
             });
+            
             mqttClient.on('close', () => {
                 updateMqttStatus('Disconnected', 'disconnected');
                 isConnected = false;
@@ -178,22 +184,35 @@
                 const parts = message.split(':');
                 if (parts.length >= 2) {
                     const deviceName = parts[0].trim().toLowerCase();
+                    const status = parts[1].trim().toUpperCase();
+                    const isSync = status.includes('SYNC'); // Cek apakah ini pesan sinkronisasi
 
-                    // Konfirmasi AC power toggle dari Arduino (ac_power:PULSE)
+                    // Logika khusus untuk ac_power
                     if (deviceName === 'ac_power') {
-                        // AC pakai IR toggle, flip state lokal
-                        const newState = !deviceStatus['ac'];
+                        let newState = deviceStatus['ac'];
+                        
+                        // Cek apakah perintahnya absolut (dari Python Sync) atau Pulse (dari Arduino fisik)
+                        if (status.includes('ON')) {
+                            newState = true;
+                        } else if (status.includes('OFF')) {
+                            newState = false;
+                        } else {
+                            newState = !newState; // Toggle jika statusnya PULSE
+                        }
+                        
                         updateDeviceUI('ac', newState);
-                        showNotification(`✅ AC ${newState ? 'dinyalakan' : 'dimatikan'}`, 'success');
+                        
+                        // Jangan tampilkan notifikasi jika ini adalah proses sinkronisasi background
+                        if (!isSync) {
+                            showNotification(`✅ AC ${newState ? 'dinyalakan' : 'dimatikan'}`, 'success');
+                        }
                     }
 
-                    // Konfirmasi suhu naik (ac_up:PULSE)
-                    if (deviceName === 'ac_up') {
+                    if (deviceName === 'ac_up' && !isSync) {
                         showNotification(`✅ Suhu dinaikkan ke ${acTemperature}°C`, 'success');
                     }
 
-                    // Konfirmasi suhu turun (ac_down:PULSE)
-                    if (deviceName === 'ac_down') {
+                    if (deviceName === 'ac_down' && !isSync) {
                         showNotification(`✅ Suhu diturunkan ke ${acTemperature}°C`, 'success');
                     }
                 }
@@ -207,7 +226,6 @@
 
         function updateDeviceUI(deviceId, isOn) {
             deviceStatus[deviceId] = isOn;
-
             const card = document.getElementById(deviceId + 'Card');
             if (card) card.className = `ac-card ${isOn ? 'on' : 'off'}`;
         }
@@ -233,7 +251,8 @@
             const command = newState ? device.onCommand : device.offCommand;
 
             if (sendCommand(command)) {
-                updateDeviceUI(deviceId, newState);
+                // Untuk AC, kita tunggu umpan balik MQTT sebelum mengubah UI
+                // karena sifat AC yang menggunakan IR Pulse
             }
         }
 

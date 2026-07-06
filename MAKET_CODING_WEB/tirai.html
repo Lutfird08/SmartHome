@@ -248,123 +248,70 @@
         
         let mqttClient = null;
         let isConnected = false;
-        let curtainState = 'closed'; // 'open', 'closed', 'moving'
+        let curtainState = 'closed'; 
         let isMoving = false;
         
-        // Fungsi koneksi MQTT
         function connectToMQTT() {
-            console.log('Menghubungkan ke MQTT...');
             updateMqttStatus('Connecting', 'connecting');
-            
-            const options = {
-                clientId: 'smart_home_curtain_' + Math.random().toString(16).substr(2, 8),
-                clean: true,
-                reconnectPeriod: 1000,
-                connectTimeout: 30000
-            };
-        
+            const options = { clientId: 'smart_home_curtain_' + Math.random().toString(16).substr(2, 8), clean: true, reconnectPeriod: 1000, connectTimeout: 30000 };
             mqttClient = mqtt.connect(MQTT_BROKER_URL, options);
         
             mqttClient.on('connect', () => {
-                console.log('✅ Terhubung ke MQTT');
                 isConnected = true;
                 updateMqttStatus('Connected', 'connected');
-                
                 subscribeToTopics();
-                
-                setTimeout(() => {
-                    sendCommand('STATUS');
-                    showNotification('✅ Terhubung ke sistem Smart Home', 'success');
-                }, 1000);
+
+                // PERBAIKAN: Minta Sinkronisasi
+                mqttClient.publish(MQTT_TOPIC_PREFIX + 'request', "REQ_ALL", { qos: 0 });
+                setTimeout(() => sendCommand('STATUS'), 1000);
             });
         
-            mqttClient.on('message', (topic, message) => {
-                handleMessage(topic, message.toString());
-            });
-        
-            mqttClient.on('error', (error) => {
-                console.error('MQTT Error:', error);
-                updateMqttStatus('Error', 'disconnected');
-                isConnected = false;
-                showNotification('❌ Error koneksi MQTT', 'error');
-            });
-            
-            mqttClient.on('close', () => {
-                console.log('MQTT disconnected');
-                updateMqttStatus('Disconnected', 'disconnected');
-                isConnected = false;
-            });
+            mqttClient.on('message', (topic, message) => handleMessage(topic, message.toString()));
+            mqttClient.on('error', () => { updateMqttStatus('Error', 'disconnected'); isConnected = false; });
+            mqttClient.on('close', () => { updateMqttStatus('Disconnected', 'disconnected'); isConnected = false; });
         }
         
-        // Subscribe ke topik
         function subscribeToTopics() {
-            const topics = [
-                MQTT_TOPIC_PREFIX + 'response',
-                MQTT_TOPIC_PREFIX + 'status',
-                MQTT_TOPIC_PREFIX + 'sensor'
-            ];
-        
-            topics.forEach(topic => {
-                mqttClient.subscribe(topic, { qos: 0 }, (err) => {
-                    if (!err) {
-                        console.log('Subscribed to:', topic);
-                    }
-                });
-            });
+            ['response', 'status', 'sensor'].forEach(t => mqttClient.subscribe(MQTT_TOPIC_PREFIX + t, { qos: 0 }));
         }
         
-        // Handle pesan masuk
         function handleMessage(topic, message) {
-            console.log('Received:', topic, '=>', message);
-            
-            // Skip system messages
-            if (message.includes("SISTEM KONTROL RUMAH") || 
-                message.includes("PERINTAH SERIAL:") ||
-                message.includes("Catatan:") ||
-                message.startsWith("ARDUINO_MEGA:") ||
-                message.startsWith("ESP32:") ||
-                message.includes("===============================")) {
-                return;
-            }
-            
-            // Parse curtain status
+            if (message.includes("SISTEM KONTROL RUMAH") || message.includes("PERINTAH SERIAL:")) return;
+            if (!message.includes(':')) return;
+
             const msgLower = message.toLowerCase();
-            
-            // Check untuk message tirai
             if (msgLower.includes('tirai')) {
-                if (msgLower.includes('buka') || msgLower.includes('terbuka')) {
-                    updateCurtainUI('open');
-                    isMoving = false;
-                    showNotification('✅ Tirai berhasil dibuka', 'success');
-                } 
-                else if (msgLower.includes('tutup') || msgLower.includes('tertutup')) {
-                    updateCurtainUI('closed');
-                    isMoving = false;
-                    showNotification('✅ Tirai berhasil ditutup', 'success');
-                }
-                else if (msgLower.includes('stop') || msgLower.includes('berhenti')) {
-                    isMoving = false;
-                    updateCurtainUI(curtainState);
-                    showNotification('⏹️ Tirai dihentikan', 'success');
+                const parts = message.split(':');
+                if (parts.length >= 2) {
+                    const statusRaw = parts[1].toUpperCase();
+                    const isSync = statusRaw.includes('SYNC');
+
+                    if (statusRaw.includes('BUKA') || statusRaw.includes('OPEN')) {
+                        updateCurtainUI('open');
+                        isMoving = false;
+                        if (!isSync) showNotification('✅ Tirai terbuka', 'success');
+                    } 
+                    else if (statusRaw.includes('TUTUP') || statusRaw.includes('CLOSE')) {
+                        updateCurtainUI('closed');
+                        isMoving = false;
+                        if (!isSync) showNotification('✅ Tirai tertutup', 'success');
+                    }
+                    else if (statusRaw.includes('STOP') || statusRaw.includes('BERHENTI')) {
+                        isMoving = false;
+                        updateCurtainUI(curtainState);
+                        if (!isSync) showNotification('⏹️ Tirai dihentikan', 'success');
+                    }
                 }
             }
         }
         
-        // Update status MQTT
         function updateMqttStatus(text, statusClass) {
             const element = document.getElementById('mqttStatus');
-            if (element) {
-                element.textContent = `MQTT: ${text}`;
-                element.className = 'mqtt-status ' + statusClass;
-            }
+            if (element) { element.textContent = `MQTT: ${text}`; element.className = 'mqtt-status ' + statusClass; }
         }
         
-        // Update UI tirai
         function updateCurtainUI(state) {
-            if (!isMoving) {
-                curtainState = state;
-            }
-            
+            if (!isMoving) curtainState = state;
             const statusElement = document.getElementById('curtainStatus');
             const btnOpen = document.getElementById('btnOpen');
             const btnClose = document.getElementById('btnClose');
@@ -374,142 +321,69 @@
                 if (isMoving) {
                     statusElement.textContent = 'Status: BERGERAK...';
                     statusElement.className = 'curtain-status moving';
-                    btnOpen.disabled = true;
-                    btnClose.disabled = true;
-                    btnStop.disabled = false;
+                    btnOpen.disabled = true; btnClose.disabled = true; btnStop.disabled = false;
                 } else {
                     if (state === 'open') {
                         statusElement.textContent = 'Status: TERBUKA';
                         statusElement.className = 'curtain-status open';
-                        btnOpen.disabled = true;
-                        btnClose.disabled = false;
+                        btnOpen.disabled = true; btnClose.disabled = false;
                     } 
                     else if (state === 'closed') {
                         statusElement.textContent = 'Status: TERTUTUP';
                         statusElement.className = 'curtain-status closed';
-                        btnOpen.disabled = false;
-                        btnClose.disabled = true;
+                        btnOpen.disabled = false; btnClose.disabled = true;
                     }
                     btnStop.disabled = true;
                 }
             }
-            
-            console.log(`Curtain state updated: ${state}, Moving: ${isMoving}`);
         }
         
-        // Kirim perintah ke Arduino
         function sendCommand(command) {
-            if (!isConnected || !mqttClient) {
-                showNotification('❌ Tidak terhubung ke server MQTT', 'error');
-                return false;
-            }
-            
-            const topic = MQTT_TOPIC_PREFIX + 'control';
-            console.log('Sending:', command);
-            
-            mqttClient.publish(topic, command, { qos: 0 }, (err) => {
-                if (err) {
-                    console.error('Failed to send:', err);
-                    showNotification('❌ Gagal mengirim perintah', 'error');
-                    return false;
-                }
-            });
-            
+            if (!isConnected || !mqttClient) return false;
+            mqttClient.publish(MQTT_TOPIC_PREFIX + 'control', command, { qos: 0 });
             return true;
         }
         
-        // Buka tirai
         function openCurtain() {
             isMoving = true;
             updateCurtainUI('open');
-            
-            if (sendCommand('TIRAIBUKA')) {
-                showNotification('📤 Membuka tirai (500ms)...', 'info');
-                
-                // Auto stop setelah 500ms
-                setTimeout(() => {
-                    if (isMoving) {
-                        curtainState = 'open';
-                        isMoving = false;
-                        updateCurtainUI('open');
-                    }
-                }, 500);
-            } else {
-                isMoving = false;
-                updateCurtainUI(curtainState);
-            }
+            if (sendCommand('TIRAIBUKA 45')) setTimeout(() => { if (isMoving) { curtainState = 'open'; isMoving = false; updateCurtainUI('open'); } }, 500);
+            else { isMoving = false; updateCurtainUI(curtainState); }
         }
         
-        // Tutup tirai
         function closeCurtain() {
             isMoving = true;
             updateCurtainUI('closed');
-            
-            if (sendCommand('TIRAITUTUP')) {
-                showNotification('📤 Menutup tirai (500ms)...', 'info');
-                
-                // Auto stop setelah 500ms
-                setTimeout(() => {
-                    if (isMoving) {
-                        curtainState = 'closed';
-                        isMoving = false;
-                        updateCurtainUI('closed');
-                    }
-                }, 500);
-            } else {
-                isMoving = false;
-                updateCurtainUI(curtainState);
-            }
+            if (sendCommand('TIRAITUTUP 45')) setTimeout(() => { if (isMoving) { curtainState = 'closed'; isMoving = false; updateCurtainUI('closed'); } }, 500);
+            else { isMoving = false; updateCurtainUI(curtainState); }
         }
         
-        // Stop tirai
         function stopCurtain() {
             if (sendCommand('TIRAIOFF')) {
-                showNotification('⏹️ Menghentikan tirai...', 'info');
                 isMoving = false;
                 updateCurtainUI(curtainState);
             }
         }
         
-        // Tampilkan notifikasi
         function showNotification(message, type = 'info') {
-            const notification = document.getElementById('notification');
-            if (notification) {
-                notification.textContent = message;
-                notification.className = 'notification';
-                
-                if (type === 'error') {
-                    notification.classList.add('error');
-                }
-                
-                notification.style.display = 'block';
-                
-                setTimeout(() => {
-                    notification.style.display = 'none';
-                }, 3000);
+            const notif = document.getElementById('notification');
+            if (notif) {
+                notif.textContent = message;
+                notif.className = 'notification ' + (type === 'error' ? 'error' : '');
+                notif.style.display = 'block';
+                setTimeout(() => { notif.style.display = 'none'; }, 3000);
             }
         }
         
-        // Setup event listeners
         function setupEventListeners() {
             const btnOpen = document.getElementById('btnOpen');
             const btnClose = document.getElementById('btnClose');
             const btnStop = document.getElementById('btnStop');
-            
-            if (btnOpen) {
-                btnOpen.addEventListener('click', openCurtain);
-            }
-            
-            if (btnClose) {
-                btnClose.addEventListener('click', closeCurtain);
-            }
-            
-            if (btnStop) {
-                btnStop.addEventListener('click', stopCurtain);
-            }
+            if (btnOpen) btnOpen.addEventListener('click', openCurtain);
+            if (btnClose) btnClose.addEventListener('click', closeCurtain);
+            if (btnStop) btnStop.addEventListener('click', stopCurtain);
         }
         
-        // Inisialisasi saat halaman dimuat
         window.onload = function() {
             setupEventListeners();
             connectToMQTT();
