@@ -1,6 +1,6 @@
 # ==========================================
 #  ASISTEN SUARA PINTAR - OFFLINE MODE
-#  (Tanpa Koneksi Web/MQTT)
+#  (Cocok dengan MAKET_RELAY_ARDUINO_MEGA)
 # ==========================================
 
 import warnings
@@ -14,7 +14,7 @@ import webbrowser
 import numpy as np
 import random
 from keras.models import load_model
-import speech_recognition as sr # Wajib untuk input suara
+import speech_recognition as sr
 from gtts import gTTS
 from io import BytesIO
 import pygame
@@ -23,7 +23,7 @@ import locale
 import time
 
 # --- 1. KONFIGURASI SERIAL ARDUINO ---
-SERIAL_PORT = 'COM3' # <--- PASTIKAN SESUAI DENGAN PORT ANDA
+SERIAL_PORT = 'COM3' # <--- PASTIKAN PORT INI BENAR (Cek di Device Manager)
 BAUD_RATE = 115200
 
 try:
@@ -47,24 +47,39 @@ except Exception as e:
     print(f"❌ Error Model AI: {e}")
     exit()
 
-# --- 3. MAPPING PERINTAH ---
+# --- 3. MAPPING PERINTAH (Versi Maket) ---
 arduino_commands = {
-    'lampu1_hidup': 'lampu1_hidup', 'lampu1_mati': 'lampu1_mati',
-    'lampu2_hidup': 'lampu2_hidup', 'lampu2_mati': 'lampu2_mati',
-    'lampu3_hidup': 'lampu3_hidup', 'lampu3_mati': 'lampu3_mati',
-    'lampusemua_hidup': 'lampusemua_hidup', 'lampusemua_mati': 'lampusemua_mati',
-    'terminal_hidup': 'terminal_hidup', 'terminal_mati': 'terminal_mati',
-    'kran_hidup': 'kran_hidup', 'kran_mati': 'kran_mati',
-    'pompa_hidup': 'pompa_hidup', 'pompa_mati': 'pompa_mati',
-    'kipas_hidup': 'kipas_hidup', 'kipas_mati': 'kipas_mati',
-    'kipas_naik': 'kipas_naik', 'kipas_turun': 'kipas_turun',
-    'tirai_hidup': 'tirai_hidup', 'tirai_mati': 'tirai_mati',
-    'kunci_mati': 'kunci_hidup', 'kunci_hidup': 'kunci_mati',
-    'ac_hidup': 'ac_hidup', 'ac_mati': 'ac_mati',
-    'ac_naik': 'ac_naik', 'ac_turun': 'ac_turun',
-    'otopompa_hidup': 'otopompa_hidup', 'otopompa_mati': 'otopompa_mati',
-    'otolampu_hidup': 'otolampu_hidup', 'otolampu_mati': 'otolampu_mati',
-    'pergi': 'pergi'
+    'lampu1_hidup':      'ON 0',           
+    'lampu1_mati':       'OFF 0',
+    'lampu2_hidup':      'ON 1',           
+    'lampu2_mati':       'OFF 1',
+    'lampu3_hidup':      'ON 2',           
+    'lampu3_mati':       'OFF 2',
+    'lampusemua_hidup':  'ALL_LAMPU_ON',   
+    'lampusemua_mati':   'ALL_LAMPU_OFF',
+    'terminal_hidup':    'ON 3',
+    'terminal_mati':     'OFF 3',
+    'kipas_hidup':       'KIPASON 80',
+    'kipas_mati':        'KIPASOFF',
+    'kipas_naik':        'KIPASON 100',    
+    'kipas_turun':       'KIPASON 60',     
+    'pompa_hidup':       'ON 7',
+    'pompa_mati':        'OFF 7',
+    'kran_hidup':        'ON 8',
+    'kran_mati':         'OFF 8',
+    'kunci_mati':        'ON 9',           
+    'kunci_hidup':       'OFF 9',          
+    'tirai_hidup':       'TIRAITUTUP 73',  
+    'tirai_mati':        'TIRAIBUKA 55',   
+    'ac_hidup':          'AC_POWER',  
+    'ac_mati':           'AC_POWER',       
+    'ac_naik':           'AC_UP',
+    'ac_turun':          'AC_DOWN',
+    'otopompa_hidup':    'ON 10',
+    'otopompa_mati':     'OFF 10',
+    'otolampu_hidup':    'ON 11',
+    'otolampu_mati':     'OFF 11',
+    'pergi':             'ALL_OFF',        
 }
 
 # --- 4. FUNGSI NLP ---
@@ -143,11 +158,37 @@ def listen():
 
 # --- 6. FUNGSI KOMUNIKASI ARDUINO ---
 def send_to_arduino(command):
-    if arduino and arduino.is_open:
-        full_command = command + '\n'
-        arduino.write(full_command.encode())
-        print(f"📤 Hardware: {command}")
-        time.sleep(0.1)
+    if not (arduino and arduino.is_open):
+        return
+        
+    # --- Penanganan Perintah Jamak (Multi-Command) ---
+    if command == 'ALL_LAMPU_ON':
+        for idx in ['0', '1', '2']:
+            arduino.write((f'ON {idx}\n').encode())
+            print(f"📤 Hardware: ON {idx}")
+            time.sleep(0.15)
+        return
+        
+    if command == 'ALL_LAMPU_OFF':
+        for idx in ['0', '1', '2']:
+            arduino.write((f'OFF {idx}\n').encode())
+            print(f"📤 Hardware: OFF {idx}")
+            time.sleep(0.15)
+        return
+        
+    if command == 'ALL_OFF':
+        cmds = ['OFF 0', 'OFF 1', 'OFF 2', 'OFF 3', 'KIPASOFF', 'OFF 7', 'OFF 8']
+        for cmd in cmds:
+            arduino.write((cmd + '\n').encode())
+            print(f"📤 Hardware: {cmd}")
+            time.sleep(0.15)
+        return
+
+    # --- Penanganan Perintah Tunggal ---
+    full_command = command + '\n'
+    arduino.write(full_command.encode())
+    print(f"📤 Hardware: {command}")
+    time.sleep(0.1)
 
 # --- 7. PROGRAM UTAMA ---
 def start_assistant():
@@ -197,7 +238,7 @@ def start_assistant():
             youtube_link = 'https://www.youtube.com/watch?v=yKNxeF4KMsY'
             webbrowser.open(youtube_link)
 
-        # SUHU (SENSOR)
+        # SUHU (SENSOR) - Perbaikan format 'temperature:'
         elif tag == 'suhu':
             if arduino:
                 print("🌡️ Membaca sensor suhu...")
@@ -206,9 +247,9 @@ def start_assistant():
                 while time.time() < t_end:
                     if arduino.in_waiting:
                         line = arduino.readline().decode('utf-8', errors='ignore').strip()
-                        if "Temp:" in line:
+                        if "temperature:" in line.lower():
                             try:
-                                parts = line.split("Temp:")
+                                parts = line.lower().split("temperature:")
                                 temp_val = float(parts[1])
                                 temp_int = int(temp_val)
                                 final_response = f"Suhu ruangan saat ini {temp_int} derajat Celcius"
@@ -222,12 +263,13 @@ def start_assistant():
         # --- EKSEKUSI ---
         
         print(f"🤖 Bot: {final_response}")
-        speak(final_response)
         
-        # Eksekusi Hardware
+        # Eksekusi Hardware terlebih dahulu agar meminimalisir delay
         if tag in arduino_commands:
             cmd = arduino_commands[tag]
             send_to_arduino(cmd)
+            
+        speak(final_response)
 
 if __name__ == "__main__":
     start_assistant()
